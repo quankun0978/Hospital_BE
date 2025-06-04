@@ -108,13 +108,6 @@ namespace Hospital_BE.BLL.Services
                     return ServiceResult<string>.Error("Số điện thoại đã được sử dụng.");
                 }
 
-                // Kiểm tra username đã tồn tại chưa
-                bool usernameExists = await _userRepository.ExistsByUsernameAsync(model.Username);
-                if (usernameExists)
-                {
-                    return ServiceResult<string>.Error("Tên đăng nhập đã được sử dụng.");
-                }
-
                 // Tạo mới người dùng theo đúng model User.cs
                 var userId = Guid.NewGuid();
                 var user = new User

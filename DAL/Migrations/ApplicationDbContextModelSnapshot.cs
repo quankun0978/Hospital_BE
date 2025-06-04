@@ -253,7 +253,6 @@ namespace Hospital_BE.DAL.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
 
@@ -263,7 +262,6 @@ namespace Hospital_BE.DAL.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Username")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 

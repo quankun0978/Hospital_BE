@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hospital_BE.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250512040549_AddPatientRecord")]
-    partial class AddPatientRecord
+    [Migration("20250603022921_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -79,6 +79,9 @@ namespace Hospital_BE.DAL.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<bool>("IsHospital")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LogoImg")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -136,7 +139,7 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("ntext");
+                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
@@ -149,6 +152,38 @@ namespace Hospital_BE.DAL.Migrations
                     b.HasIndex("PriceId");
 
                     b.ToTable("DoctorInfos");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Markdown", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClinicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentHTML")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContentMarkdown")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("DoctorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicId");
+
+                    b.HasIndex("DoctorId");
+
+                    b.ToTable("Markdowns");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.PatientRecord", b =>
@@ -221,7 +256,6 @@ namespace Hospital_BE.DAL.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
 
@@ -231,7 +265,6 @@ namespace Hospital_BE.DAL.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Username")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -284,6 +317,23 @@ namespace Hospital_BE.DAL.Migrations
                     b.Navigation("Position");
 
                     b.Navigation("Price");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Markdown", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.Clinic", "Clinic")
+                        .WithMany()
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Clinic");
+
+                    b.Navigation("Doctor");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.PatientRecord", b =>

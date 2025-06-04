@@ -35,13 +35,6 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                // Kiểm tra username đã tồn tại chưa
-                bool usernameExists = await _userRepository.ExistsByUsernameAsync(model.Username);
-                if (usernameExists)
-                {
-                    return ServiceResult<RegisterResultDTO>.Error("Tên đăng nhập đã được sử dụng.");
-                }
-
                 // Tạo User mới
                 var createUserDto = new CreateUserDTO
                 {

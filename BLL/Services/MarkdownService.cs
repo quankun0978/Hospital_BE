@@ -19,8 +19,7 @@ namespace Hospital_BE.BLL.Services
         {
             return await _context.Markdowns
                 .Include(m => m.Doctor)
-                .Include(m => m.Clinic)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.DoctorId == id);
         }
 
         public async Task<Markdown> GetMarkdownByDoctorOrClinicIdAsync(Guid id)
