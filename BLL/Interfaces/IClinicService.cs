@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hospital_BE.DAL.Models;
 using Hospital_BE.PL.DTOs.Common;
+using Hospital_BE.PL.DTOs;
 
 namespace Hospital_BE.BLL.Interfaces
 {
@@ -20,7 +21,14 @@ namespace Hospital_BE.BLL.Interfaces
         /// </summary>
         /// <param name="id">ID của phòng khám</param>
         /// <returns>Thông tin phòng khám hoặc null nếu không tìm thấy</returns>
-        Task<Clinic> GetClinicByIdAsync(Guid id);
+        Task<ClinicDetailDto> GetClinicByIdAsync(Guid id);
+        
+        /// <summary>
+        /// Lấy thông tin cơ bản của phòng khám theo ID (entity)
+        /// </summary>
+        /// <param name="id">ID của phòng khám</param>
+        /// <returns>Entity phòng khám hoặc null nếu không tìm thấy</returns>
+        Task<Clinic> GetClinicEntityByIdAsync(Guid id);
         
         /// <summary>
         /// Tạo mới một phòng khám

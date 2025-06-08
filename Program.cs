@@ -26,6 +26,8 @@ builder.Services.AddScoped<IPatientRecordRepository, PatientRecordRepository>();
 builder.Services.AddScoped<IAllcodeRepository, AllcodeRepository>();
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+builder.Services.AddScoped<ISpecialtyRepository, SpecialtyRepository>();
+builder.Services.AddScoped<AppointmentRepository>();
 builder.Services.AddSingleton<IOTPRepository, OTPRepository>();
 
 // Đăng ký services
@@ -35,6 +37,8 @@ builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IAllCodeService, AllCodeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IMarkdownService, MarkdownService>();
+builder.Services.AddScoped<ISpecialtyService, SpecialtyService>();
+builder.Services.AddScoped<AppointmentService>();
 
 builder.Services.AddControllers();
 

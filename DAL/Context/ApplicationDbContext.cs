@@ -15,6 +15,11 @@ namespace Hospital_BE.DAL.Context
         public DbSet<Allcode> Allcodes { get; set; }
         public DbSet<PatientRecord> PatientRecords { get; set; }
         public DbSet<Markdown> Markdowns { get; set; }
+        public DbSet<DoctorClinicSpecialty> DoctorClinicSpecialties { get; set; }
+        public DbSet<Specialty> Specialties { get; set; }
+        public DbSet<ClinicImage> ClinicImages { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -114,7 +119,78 @@ namespace Hospital_BE.DAL.Context
                 .HasForeignKey(m => m.ClinicId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Cấu hình bảng Specialty
+            modelBuilder.Entity<Specialty>()
+                .HasKey(s => s.SpecialtyId);
+
+            // Cấu hình bảng DoctorClinicSpecialty
+            modelBuilder.Entity<DoctorClinicSpecialty>()
+                .HasKey(dcs => dcs.Id);
+
+            // Quan hệ: DoctorClinicSpecialty - DoctorInfo
+            modelBuilder.Entity<DoctorClinicSpecialty>()
+                .HasOne(dcs => dcs.Doctor)
+                .WithMany()
+                .HasForeignKey(dcs => dcs.DoctorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Quan hệ: DoctorClinicSpecialty - Clinic
+            modelBuilder.Entity<DoctorClinicSpecialty>()
+                .HasOne(dcs => dcs.Clinic)
+                .WithMany()
+                .HasForeignKey(dcs => dcs.ClinicId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Quan hệ: DoctorClinicSpecialty - Specialty
+            modelBuilder.Entity<DoctorClinicSpecialty>()
+                .HasOne(dcs => dcs.Specialty)
+                .WithMany()
+                .HasForeignKey(dcs => dcs.SpecialtyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Đảm bảo không bị trùng dữ liệu bác sĩ - cơ sở - chuyên khoa
+            modelBuilder.Entity<DoctorClinicSpecialty>()
+                .HasIndex(dcs => new { dcs.DoctorId, dcs.ClinicId, dcs.SpecialtyId })
+                .IsUnique();
+            // Quan hệ ClinicImage - Clinic
+            modelBuilder.Entity<ClinicImage>()
+                .HasOne(ci => ci.Clinic)
+                .WithMany(c => c.ClinicImages)
+                .HasForeignKey(ci => ci.ClinicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Cấu hình bảng Appointment
+            modelBuilder.Entity<Appointment>()
+                .HasKey(a => a.AppointmentId);
+
+            // Quan hệ: Appointment - PatientRecord
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Patient)
+                .WithMany()
+                .HasForeignKey(a => a.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Quan hệ: Appointment - User (Doctor)
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Doctor)
+                .WithMany()
+                .HasForeignKey(a => a.DoctorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Ràng buộc cho Status
+            modelBuilder.Entity<Appointment>()
+                .Property(a => a.Status)
+                .HasMaxLength(1);
+
+            // Index cho tìm kiếm nhanh
+            modelBuilder.Entity<Appointment>()
+                .HasIndex(a => new { a.DoctorId, a.AppointmentDate });
+
+            modelBuilder.Entity<Appointment>()
+                .HasIndex(a => a.PatientId);
+
             base.OnModelCreating(modelBuilder);
+
         }
     }
 } 

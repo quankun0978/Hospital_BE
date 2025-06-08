@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Hospital_BE.BLL.Interfaces;
 using Hospital_BE.DAL.Interfaces;
 using Hospital_BE.DAL.Models;
 using Hospital_BE.PL.DTOs.Common;
+using Hospital_BE.PL.DTOs;
 
 namespace Hospital_BE.BLL.Services
 {
@@ -23,7 +25,12 @@ namespace Hospital_BE.BLL.Services
             return new PaginatedResult<Clinic>(items, totalCount, parameters.PageNumber, parameters.PageSize);
         }
 
-        public async Task<Clinic> GetClinicByIdAsync(Guid id)
+        public async Task<ClinicDetailDto> GetClinicByIdAsync(Guid id)
+        {
+            return await _clinicRepository.GetDetailByIdAsync(id);
+        }
+
+        public async Task<Clinic> GetClinicEntityByIdAsync(Guid id)
         {
             return await _clinicRepository.GetByIdAsync(id);
         }

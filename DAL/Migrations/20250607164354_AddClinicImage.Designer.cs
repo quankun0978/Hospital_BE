@@ -4,6 +4,7 @@ using Hospital_BE.DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hospital_BE.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250607164354_AddClinicImage")]
+    partial class AddClinicImage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,49 +87,6 @@ namespace Hospital_BE.DAL.Migrations
                     b.HasIndex("CodeType", "CodeKey");
 
                     b.ToTable("Allcodes");
-                });
-
-            modelBuilder.Entity("Hospital_BE.DAL.Models.Appointment", b =>
-                {
-                    b.Property<Guid>("AppointmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("AppointmentDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("DoctorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Reason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)");
-
-                    b.Property<string>("TimeType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("AppointmentId");
-
-                    b.HasIndex("PatientId");
-
-                    b.HasIndex("DoctorId", "AppointmentDate");
-
-                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.Clinic", b =>
@@ -431,25 +391,6 @@ namespace Hospital_BE.DAL.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Specialty");
-                });
-
-            modelBuilder.Entity("Hospital_BE.DAL.Models.Appointment", b =>
-                {
-                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
-                        .WithMany()
-                        .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Hospital_BE.DAL.Models.PatientRecord", "Patient")
-                        .WithMany()
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Doctor");
-
-                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.ClinicImage", b =>

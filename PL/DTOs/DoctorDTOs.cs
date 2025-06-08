@@ -42,6 +42,16 @@ namespace Hospital_BE.PL.DTOs
         /// Danh sách thông tin chi tiết của bác sĩ
         /// </summary>
         public List<DoctorInfoDto> DoctorInfos { get; set; }
+
+        /// <summary>
+        /// Danh sách chuyên khoa của bác sĩ
+        /// </summary>
+        public List<DoctorSpecialtyDto> Specialties { get; set; }
+
+        /// <summary>
+        /// Danh sách phòng khám mà bác sĩ làm việc
+        /// </summary>
+        public List<DoctorClinicDto> Clinics { get; set; }
     }
 
     /// <summary>
@@ -108,5 +118,86 @@ namespace Hospital_BE.PL.DTOs
         /// Số lượng
         /// </summary>
         public int? Count { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho chuyên khoa của bác sĩ
+    /// </summary>
+    public class DoctorSpecialtyDto
+    {
+        /// <summary>
+        /// ID chuyên khoa
+        /// </summary>
+        public Guid SpecialtyId { get; set; }
+
+        /// <summary>
+        /// Tên chuyên khoa
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Hình ảnh chuyên khoa
+        /// </summary>
+        public string ImageUrl { get; set; }
+
+        /// <summary>
+        /// Mô tả chuyên khoa
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Slug chuyên khoa
+        /// </summary>
+        public string Slug { get; set; }
+
+        // Alias cho frontend
+        public string Image => ImageUrl;
+        public string Link => !string.IsNullOrEmpty(Slug) ? $"/chuyen-khoa/{Slug}" : "#";
+    }
+
+    /// <summary>
+    /// DTO cho phòng khám mà bác sĩ làm việc
+    /// </summary>
+    public class DoctorClinicDto
+    {
+        /// <summary>
+        /// ID phòng khám
+        /// </summary>
+        public Guid ClinicId { get; set; }
+
+        /// <summary>
+        /// Tên phòng khám
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Địa chỉ phòng khám
+        /// </summary>
+        public string Address { get; set; }
+
+        /// <summary>
+        /// Mô tả phòng khám
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Slug phòng khám
+        /// </summary>
+        public string Slug { get; set; }
+
+        /// <summary>
+        /// Hình ảnh phòng khám
+        /// </summary>
+        public string ImageUrl { get; set; }
+
+        /// <summary>
+        /// Logo phòng khám
+        /// </summary>
+        public string LogoImg { get; set; }
+
+        /// <summary>
+        /// Có phải bệnh viện hay không
+        /// </summary>
+        public bool IsHospital { get; set; }
     }
 } 

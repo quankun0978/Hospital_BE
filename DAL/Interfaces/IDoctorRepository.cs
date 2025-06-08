@@ -15,5 +15,7 @@ namespace Hospital_BE.DAL.Interfaces
         Task<DoctorInfo> CreateAsync(DoctorInfo doctorInfo);
         Task<bool> UpdateAsync(Guid id, DoctorInfo doctorInfo);
         Task<bool> DeleteAsync(Guid id);
+        Task<List<DoctorInfo>> GetAllDoctorInfosByDoctorIdAsync(Guid doctorId);
+        Task<List<DoctorClinicSpecialty>> GetDoctorClinicSpecialtiesByDoctorIdAsync(Guid doctorId);
     }
 } 

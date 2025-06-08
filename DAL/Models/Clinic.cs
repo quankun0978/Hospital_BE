@@ -65,5 +65,7 @@ namespace Hospital_BE.DAL.Models
         /// Danh sách các bác sĩ làm việc tại phòng khám này
         /// </summary>
         public virtual ICollection<DoctorInfo> Doctors { get; set; }
+        public virtual ICollection<ClinicImage> ClinicImages { get; set; }
+
     }
 } 

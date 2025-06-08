@@ -88,10 +88,32 @@ namespace Hospital_BE.DAL.Repositories
         {
             return await _context.DoctorInfos
                 .Include(d => d.Doctor)
+                    .ThenInclude(u => u.Role)
                 .Include(d => d.Position)
                 .Include(d => d.Price)
                 .Include(d => d.Clinic)
                 .FirstOrDefaultAsync(d => d.Slug == slug);
+        }
+
+        public async Task<List<DoctorInfo>> GetAllDoctorInfosByDoctorIdAsync(Guid doctorId)
+        {
+            return await _context.DoctorInfos
+                .Include(d => d.Doctor)
+                .Include(d => d.Position)
+                .Include(d => d.Price)
+                .Include(d => d.Clinic)
+                .Where(d => d.DoctorId == doctorId)
+                .ToListAsync();
+        }
+
+        public async Task<List<DoctorClinicSpecialty>> GetDoctorClinicSpecialtiesByDoctorIdAsync(Guid doctorId)
+        {
+            return await _context.DoctorClinicSpecialties
+                .Include(dcs => dcs.Specialty)
+                .Include(dcs => dcs.Clinic)
+                .Include(dcs => dcs.Doctor)
+                .Where(dcs => dcs.DoctorId == doctorId)
+                .ToListAsync();
         }
     }
 } 
