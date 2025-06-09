@@ -14,11 +14,13 @@ namespace Hospital_BE.BLL.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly AppointmentRepository _appointmentRepository;
+        private readonly EmailService _emailService;
 
-        public AppointmentService(ApplicationDbContext context, AppointmentRepository appointmentRepository)
+        public AppointmentService(ApplicationDbContext context, AppointmentRepository appointmentRepository, EmailService emailService)
         {
             _context = context;
             _appointmentRepository = appointmentRepository;
+            _emailService = emailService;
         }
 
         public async Task<ServiceResult<Guid>> CreateAppointmentAsync(CreateAppointmentDTO model)
@@ -50,7 +52,31 @@ namespace Hospital_BE.BLL.Services
                     CreatedAt = DateTime.Now
                 };
 
-                await _appointmentRepository.CreateAsync(appointment);
+                var createdAppointment = await _appointmentRepository.CreateAsync(appointment);
+
+                // Gửi email xác nhận (không làm fail transaction nếu gửi email lỗi)
+                try
+                {
+                    // Lấy thông tin chi tiết để gửi email
+                    var appointmentWithDetails = await _appointmentRepository.GetByIdAsync(createdAppointment.AppointmentId);
+                    if (appointmentWithDetails?.Patient?.Email != null)
+                    {
+                        await _emailService.SendAppointmentConfirmationAsync(
+                            appointmentWithDetails.Patient.Email,
+                            appointmentWithDetails.Patient.FullName ,
+                            appointmentWithDetails.Doctor?.Name ?? "Bác sĩ",
+                            appointmentWithDetails.AppointmentDate,
+                            appointmentWithDetails.TimeType ?? "",
+                            "Phòng khám", // Có thể lấy từ clinic của doctor
+                            appointmentWithDetails.Reason ?? ""
+                        );
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    // Log lỗi email nhưng không fail transaction
+                    Console.WriteLine($"Lỗi gửi email: {emailEx.Message}");
+                }
 
                 return ServiceResult<Guid>.Ok("Đặt lịch khám thành công.", appointment.AppointmentId);
             }
