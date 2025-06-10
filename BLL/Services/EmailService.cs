@@ -63,6 +63,7 @@ namespace Hospital_BE.BLL.Services
             DateTime appointmentDate, 
             string timeSlot,
             string clinicName,
+            Guid appointmentId,
             string reason = "")
         {
             try
@@ -73,7 +74,8 @@ namespace Hospital_BE.BLL.Services
                     doctorName, 
                     appointmentDate, 
                     timeSlot, 
-                    clinicName, 
+                    clinicName,
+                    appointmentId,
                     reason
                 );
 
@@ -91,6 +93,7 @@ namespace Hospital_BE.BLL.Services
             DateTime appointmentDate, 
             string timeSlot, 
             string clinicName,
+            Guid appointmentId,
             string reason)
         {
             return $@"
@@ -120,6 +123,11 @@ namespace Hospital_BE.BLL.Services
             <p>Xin chào <strong>{patientName}</strong>,</p>
             
             <p class='success'>✅ Lịch khám của bạn đã được đặt thành công!</p>
+            
+            <div style='background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 16px; margin: 20px 0;'>
+                <p style='margin: 0; color: #856404; font-weight: bold;'>⚠️ Vui lòng xác nhận lịch khám</p>
+                <p style='margin: 5px 0 0 0; color: #856404;'>Bạn cần xác nhận lịch khám để hoàn tất đặt lịch.</p>
+            </div>
             
             <table class='info-table'>
                 <tr>
@@ -156,6 +164,17 @@ namespace Hospital_BE.BLL.Services
                 <li>Nếu cần hủy hoặc thay đổi lịch hẹn, vui lòng liên hệ trước 24h</li>
                 <li>Hotline hỗ trợ: 1900-2805</li>
             </ul>
+            
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='http://localhost:5173/confirm-appointment?id={appointmentId}' 
+                   style='background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>
+                    XÁC NHẬN LỊCH KHÁM
+                </a>
+                <p style='margin-top: 10px; font-size: 12px; color: #666;'>
+                    Hoặc copy link sau vào trình duyệt:<br/>
+                    http://localhost:5173/confirm-appointment?id={appointmentId}
+                </p>
+            </div>
             
             <p>Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi!</p>
         </div>

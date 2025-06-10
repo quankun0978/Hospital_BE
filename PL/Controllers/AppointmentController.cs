@@ -134,6 +134,25 @@ namespace Hospital_BE.PL.Controllers
 
             return ApiOk(new { success = true }, "Hủy lịch khám thành công");
         }
+
+        /// <summary>
+        /// Xác nhận lịch hẹn
+        /// </summary>
+        [HttpPut("{id}/confirm")]
+        public async Task<IActionResult> ConfirmAppointment(Guid id)
+        {
+            var result = await _appointmentService.ConfirmAppointmentAsync(id);
+            if (!result.Success)
+            {
+                if (result.Message.Contains("không tìm thấy"))
+                {
+                    return ApiNotFound<object>(result.Message);
+                }
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(new { success = true }, result.Message);
+        }
     }
 
     // DTO cho request update status
