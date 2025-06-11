@@ -83,7 +83,30 @@ namespace Hospital_BE.PL.DTOs
     /// </summary>
     public class LoginResponseDTO
     {
-        public string Token { get; set; }
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
+        public DateTime AccessTokenExpiry { get; set; }
+        public DateTime RefreshTokenExpiry { get; set; }
         public UserDTO User { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho refresh token request
+    /// </summary>
+    public class RefreshTokenRequestDTO
+    {
+        [Required(ErrorMessage = "Refresh token là bắt buộc")]
+        public string RefreshToken { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho refresh token response
+    /// </summary>
+    public class RefreshTokenResponseDTO
+    {
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
+        public DateTime AccessTokenExpiry { get; set; }
+        public DateTime RefreshTokenExpiry { get; set; }
     }
 } 

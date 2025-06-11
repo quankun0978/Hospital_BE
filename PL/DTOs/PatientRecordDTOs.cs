@@ -8,7 +8,7 @@ namespace Hospital_BE.PL.DTOs
         public string Address { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }
-        public string HealthInsuranceNumber { get; set; }
+        public string? HealthInsuranceNumber { get; set; }
         public Guid UserId { get; set; }
     }
 } 

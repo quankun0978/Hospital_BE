@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Hospital_BE.BLL.Interfaces;
 using Hospital_BE.PL.Controllers.Base;
@@ -78,6 +79,29 @@ namespace Hospital_BE.PL.Controllers
 
             var result = await _authService.PhoneExistsAsync(model.Phone);
             return Ok(result);
+        }
+
+        /// <summary>
+        /// API refresh token
+        /// </summary>
+        /// <param name="model">Refresh token request</param>
+        /// <returns>Access token và refresh token mới</returns>
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiBadRequest<object>(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            }
+
+            var result = await _authService.RefreshTokenAsync(model);
+            
+            if (!result.Success)
+            {
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(result.Data, "Làm mới token thành công");
         }
     }
 } 

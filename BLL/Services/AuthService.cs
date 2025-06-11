@@ -5,6 +5,9 @@ using Hospital_BE.BLL.Models;
 using Hospital_BE.DAL.Interfaces;
 using Hospital_BE.DAL.Models;
 using Hospital_BE.PL.DTOs;
+using Hospital_BE.DAL.Context;
+using Microsoft.EntityFrameworkCore;
+using BCrypt.Net;
 
 namespace Hospital_BE.BLL.Services
 {
@@ -13,15 +16,21 @@ namespace Hospital_BE.BLL.Services
         private readonly IUserRepository _userRepository;
         private readonly IPatientRecordRepository _patientRecordRepository;
         private readonly IUserService _userService;
+        private readonly JwtService _jwtService;
+        private readonly ApplicationDbContext _context;
 
         public AuthService(
             IUserRepository userRepository,
             IPatientRecordRepository patientRecordRepository,
-            IUserService userService)
+            IUserService userService,
+            JwtService jwtService,
+            ApplicationDbContext context)
         {
             _userRepository = userRepository;
             _patientRecordRepository = patientRecordRepository;
             _userService = userService;
+            _jwtService = jwtService;
+            _context = context;
         }
 
         public async Task<ServiceResult> PhoneExistsAsync(string phone)
@@ -35,10 +44,11 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                // Tạo User mới
+                // Tạo User mới với password đã hash
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
                 var createUserDto = new CreateUserDTO
                 {
-                    Password = model.Password, // Trong thực tế, nên mã hóa mật khẩu ở đây
+                    Password = hashedPassword,
                     Name = model.Name,
                     Phone = model.Phone,
                     RoleId = model.RoleId
@@ -119,29 +129,108 @@ namespace Hospital_BE.BLL.Services
                     return ServiceResult<LoginResponseDTO>.Error("Số điện thoại hoặc mật khẩu không đúng");
                 }
 
-                // Kiểm tra mật khẩu (ở đây đang so sánh trực tiếp, thực tế nên mã hóa và so sánh)
-                if (user.Password != model.Password)
+                // Kiểm tra mật khẩu với BCrypt
+                bool isPasswordValid = false;
+                try
+                {
+                    // Thử verify với BCrypt trước
+                    isPasswordValid = BCrypt.Net.BCrypt.Verify(model.Password, user.Password);
+                }
+                catch (Exception)
+                {
+                    // Nếu lỗi BCrypt, có thể password chưa được hash, thử so sánh trực tiếp
+                    isPasswordValid = (model.Password == user.Password);
+                    
+                    // Nếu password đúng nhưng chưa hash, hash lại và cập nhật
+                    if (isPasswordValid)
+                    {
+                        user.Password = BCrypt.Net.BCrypt.HashPassword(model.Password);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (!isPasswordValid)
                 {
                     return ServiceResult<LoginResponseDTO>.Error("Số điện thoại hoặc mật khẩu không đúng");
                 }
 
-                // Lấy thông tin chi tiết của người dùng
-                var userDto = await _userService.GetUserDetailAsync(user.UserId.ToString());
+                // Tạo JWT tokens
+                var tokenResponse = _jwtService.GenerateTokens(user);
 
-                // Tạo token (trong thực tế, nên sử dụng JWT hoặc phương pháp xác thực khác)
-                var token = $"fake-jwt-token-{Guid.NewGuid()}"; // Đây chỉ là ví dụ, không nên sử dụng trong thực tế
-
-                var response = new LoginResponseDTO
+                // Xóa refresh token cũ của user này (nếu có)
+                var existingToken = await _context.RefreshTokens
+                    .FirstOrDefaultAsync(rt => rt.UserId == user.UserId);
+                
+                if (existingToken != null)
                 {
-                    Token = token,
-                    User = userDto
+                    _context.RefreshTokens.Remove(existingToken);
+                }
+
+                // Lưu refresh token mới vào database
+                var refreshToken = new RefreshToken
+                {
+                    Token = tokenResponse.RefreshToken,
+                    UserId = user.UserId,
+                    ExpiryDate = tokenResponse.RefreshTokenExpiry,
+                    CreatedAt = DateTime.UtcNow
                 };
 
-                return ServiceResult<LoginResponseDTO>.Ok("Đăng nhập thành công", response);
+                _context.RefreshTokens.Add(refreshToken);
+                await _context.SaveChangesAsync();
+
+                return ServiceResult<LoginResponseDTO>.Ok("Đăng nhập thành công", tokenResponse);
             }
             catch (Exception ex)
             {
                 return ServiceResult<LoginResponseDTO>.Error($"Đăng nhập thất bại: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult<RefreshTokenResponseDTO>> RefreshTokenAsync(RefreshTokenRequestDTO model)
+        {
+            try
+            {
+                // Tìm refresh token trong database
+                var refreshToken = await _context.RefreshTokens
+                    .Include(rt => rt.User)
+                    .FirstOrDefaultAsync(rt => rt.Token == model.RefreshToken);
+
+                if (refreshToken == null)
+                {
+                    return ServiceResult<RefreshTokenResponseDTO>.Error("Refresh token không hợp lệ");
+                }
+
+                // Kiểm tra token đã hết hạn chưa
+                if (refreshToken.ExpiryDate <= DateTime.UtcNow)
+                {
+                    _context.RefreshTokens.Remove(refreshToken);
+                    await _context.SaveChangesAsync();
+                    return ServiceResult<RefreshTokenResponseDTO>.Error("Refresh token đã hết hạn");
+                }
+
+                // Tạo tokens mới
+                var newTokens = _jwtService.GenerateTokens(refreshToken.User);
+
+                // Cập nhật refresh token với token mới
+                refreshToken.Token = newTokens.RefreshToken;
+                refreshToken.ExpiryDate = newTokens.RefreshTokenExpiry;
+                refreshToken.CreatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                var response = new RefreshTokenResponseDTO
+                {
+                    AccessToken = newTokens.AccessToken,
+                    RefreshToken = newTokens.RefreshToken,
+                    AccessTokenExpiry = newTokens.AccessTokenExpiry,
+                    RefreshTokenExpiry = newTokens.RefreshTokenExpiry
+                };
+
+                return ServiceResult<RefreshTokenResponseDTO>.Ok("Làm mới token thành công", response);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<RefreshTokenResponseDTO>.Error($"Lỗi khi làm mới token: {ex.Message}");
             }
         }
     }

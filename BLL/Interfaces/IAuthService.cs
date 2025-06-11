@@ -26,5 +26,12 @@ namespace Hospital_BE.BLL.Interfaces
         /// <param name="phone">Số điện thoại cần kiểm tra</param>
         /// <returns>true nếu đã tồn tại, false nếu chưa tồn tại</returns>
         Task<ServiceResult> PhoneExistsAsync(string phone);
+
+        /// <summary>
+        /// Refresh access token
+        /// </summary>
+        /// <param name="model">Refresh token request</param>
+        /// <returns>Tokens mới</returns>
+        Task<ServiceResult<RefreshTokenResponseDTO>> RefreshTokenAsync(RefreshTokenRequestDTO model);
     }
 } 

@@ -5,11 +5,13 @@ using System.Linq;
 using Hospital_BE.DAL.Context;
 using Hospital_BE.PL.Controllers.Base;
 using Hospital_BE.PL.DTOs;
+using Hospital_BE.PL.Middleware;
 
 namespace Hospital_BE.PL.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PatientRecordController : BaseController
     {
         private readonly ApplicationDbContext _context;

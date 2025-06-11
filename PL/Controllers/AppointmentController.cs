@@ -1,12 +1,15 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Hospital_BE.BLL.Services;
 using Hospital_BE.PL.Controllers.Base;
 using Hospital_BE.PL.DTOs.Common;
+using Hospital_BE.PL.Middleware;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hospital_BE.PL.Controllers
 {
+    [Authorize]
     public class AppointmentController : BaseController
     {
         private readonly AppointmentService _appointmentService;
