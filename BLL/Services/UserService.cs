@@ -10,6 +10,7 @@ using Hospital_BE.DAL.Models;
 using Hospital_BE.PL.DTOs;
 using Hospital_BE.PL.DTOs.Common;
 using Microsoft.EntityFrameworkCore;
+using BCrypt.Net;
 
 namespace Hospital_BE.BLL.Services
 {
@@ -24,9 +25,9 @@ namespace Hospital_BE.BLL.Services
             _userRepository = userRepository;
         }
 
-        public async Task<bool> CheckPhoneExistsAsync(string phone)
+        public async Task<bool> CheckEmailExistsAsync(string email)
         {
-            return await _userRepository.ExistsByPhoneAsync(phone);
+            return await _userRepository.ExistsByEmailAsync(email);
         }
 
         public async Task<PaginatedResult<User>> GetUsersAsync(QueryParameters parameters)
@@ -91,7 +92,7 @@ namespace Hospital_BE.BLL.Services
                 UserId = user.UserId.ToString(),
                 Username = user.Username,
                 Name = user.Name,
-                Phone = user.Phone,
+                Email = user.Email,
                 RoleId = user.RoleId,
                 RoleName = user.Role?.ValueVi
             };
@@ -101,11 +102,14 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                // Kiểm tra số điện thoại đã tồn tại chưa
-                bool phoneExists = await _userRepository.ExistsByPhoneAsync(model.Phone);
-                if (phoneExists)
+                // Kiểm tra email đã tồn tại chưa
+                if (!string.IsNullOrEmpty(model.Email))
                 {
-                    return ServiceResult<string>.Error("Số điện thoại đã được sử dụng.");
+                    bool emailExists = await _userRepository.ExistsByEmailAsync(model.Email);
+                    if (emailExists)
+                    {
+                        return ServiceResult<string>.Error("Email đã được sử dụng.");
+                    }
                 }
 
                 // Tạo mới người dùng theo đúng model User.cs
@@ -115,7 +119,7 @@ namespace Hospital_BE.BLL.Services
                     UserId = userId,
                     Username = model.Username,
                     Password = model.Password, // Nên mã hóa mật khẩu trước khi lưu
-                    Phone = model.Phone,
+                    Email = model.Email,
                     Name = model.Name,
                     RoleId = model.RoleId
                 };
@@ -146,13 +150,13 @@ namespace Hospital_BE.BLL.Services
                     return ServiceResult.Error("Không tìm thấy người dùng.");
                 }
 
-                // Kiểm tra số điện thoại
-                if (!string.IsNullOrEmpty(model.Phone) && model.Phone != user.Phone)
+                // Kiểm tra email
+                if (!string.IsNullOrEmpty(model.Email) && model.Email != user.Email)
                 {
-                    bool phoneExists = await _userRepository.ExistsByPhoneAsync(model.Phone);
-                    if (phoneExists)
+                    bool emailExists = await _userRepository.ExistsByEmailAsync(model.Email);
+                    if (emailExists)
                     {
-                        return ServiceResult.Error("Số điện thoại đã được sử dụng bởi người dùng khác.");
+                        return ServiceResult.Error("Email đã được sử dụng bởi người dùng khác.");
                     }
                 }
 
@@ -160,8 +164,8 @@ namespace Hospital_BE.BLL.Services
                 if (!string.IsNullOrEmpty(model.Name))
                     user.Name = model.Name;
 
-                if (!string.IsNullOrEmpty(model.Phone))
-                    user.Phone = model.Phone;
+                if (!string.IsNullOrEmpty(model.Email))
+                    user.Email = model.Email;
 
                 if (!string.IsNullOrEmpty(model.RoleId))
                     user.RoleId = model.RoleId;
@@ -195,6 +199,126 @@ namespace Hospital_BE.BLL.Services
             await _context.SaveChangesAsync();
 
             return ServiceResult.Ok("Xóa người dùng thành công.");
+        }
+
+        public async Task<ServiceResult<bool>> CheckUserExistsAsync(Guid userId, string roleId)
+        {
+            try
+            {
+                var exists = await _context.Users
+                    .AnyAsync(u => u.UserId == userId && u.RoleId == roleId);
+                return ServiceResult<bool>.Ok("", exists);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Error($"Lỗi khi kiểm tra người dùng: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult<List<User>>> GetUsersByRoleAsync(string roleId)
+        {
+            try
+            {
+                var users = await _context.Users
+                    .Where(u => u.RoleId == roleId)
+                    .OrderBy(u => u.Name)
+                    .ToListAsync();
+                return ServiceResult<List<User>>.Ok("", users);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<List<User>>.Error($"Lỗi khi lấy danh sách người dùng theo role: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult> ResetPasswordAsync(ResetPasswordDTO model)
+        {
+            try
+            {
+                // Chúng ta sẽ validate token trực tiếp trong UserService để tránh circular dependency
+                // Lấy email từ token (token chứa email được hash)
+                // Tạm thời để đơn giản, chúng ta sẽ validate token bằng cách decode nó
+                
+                // Tìm user by email từ token (giả sử token là email được hash hoặc encode)
+                // Trong thực tế, bạn có thể lưu token trong database hoặc cache
+                
+                // Để đơn giản, chúng ta sẽ tạo một cách validate token khác
+                // Bây giờ tôi sẽ tạo method validate riêng
+                var email = await ValidateAndGetEmailFromTokenAsync(model.Token);
+                if (string.IsNullOrEmpty(email))
+                {
+                    return ServiceResult.Error("Token không hợp lệ hoặc đã hết hạn");
+                }
+
+                // Get user by email
+                var user = await _userRepository.GetByEmailAsync(email);
+                if (user == null)
+                {
+                    return ServiceResult.Error("Không tìm thấy người dùng");
+                }
+
+                // Hash new password
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+                user.Password = hashedPassword;
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                return ServiceResult.Ok("Đặt lại mật khẩu thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Error($"Lỗi khi đặt lại mật khẩu: {ex.Message}");
+            }
+        }
+
+        private async Task<string> ValidateAndGetEmailFromTokenAsync(string token)
+        {
+            try
+            {
+                return await ResetPasswordTokenService.ValidateAndGetEmailAsync(token);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<ServiceResult> ChangePasswordAsync(string userId, ChangePasswordDTO model)
+        {
+            try
+            {
+                if (!Guid.TryParse(userId, out Guid userGuid))
+                {
+                    return ServiceResult.Error("ID người dùng không hợp lệ");
+                }
+
+                var user = await _userRepository.GetByIdAsync(userGuid);
+                if (user == null)
+                {
+                    return ServiceResult.Error("Không tìm thấy người dùng");
+                }
+
+                // Verify current password
+                bool isCurrentPasswordValid = BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.Password);
+                if (!isCurrentPasswordValid)
+                {
+                    return ServiceResult.Error("Mật khẩu hiện tại không đúng");
+                }
+
+                // Hash new password
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+                user.Password = hashedPassword;
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                return ServiceResult.Ok("Đổi mật khẩu thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Error($"Lỗi khi đổi mật khẩu: {ex.Message}");
+            }
         }
     }
 } 

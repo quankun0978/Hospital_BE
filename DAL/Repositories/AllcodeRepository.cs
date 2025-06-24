@@ -34,6 +34,14 @@ namespace Hospital_BE.DAL.Repositories
             return (items, totalCount);
         }
 
+        public async Task<List<Allcode>> GetByTypeWithoutPaginationAsync(string codeType)
+        {
+            return await _context.Allcodes
+                .Where(a => a.CodeType == codeType)
+                .OrderBy(a => a.CodeKey)
+                .ToListAsync();
+        }
+
         public async Task<List<string>> GetAllCodeTypesAsync()
         {
             return await _context.Allcodes

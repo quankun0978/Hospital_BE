@@ -65,6 +65,69 @@ namespace Hospital_BE.PL.Controllers
         }
 
         /// <summary>
+        /// API gửi mã xác thực email
+        /// </summary>
+        /// <param name="model">Email cần gửi mã xác thực</param>
+        /// <returns>Kết quả gửi mã</returns>
+        [HttpPost("send-email-verification")]
+        public async Task<IActionResult> SendEmailVerification([FromBody] SendEmailVerificationDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiBadRequest<object>(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            }
+
+            var result = await _authService.SendEmailVerificationAsync(model);
+            
+            if (!result.Success)
+            {
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(result.Data, "Mã xác thực đã được gửi đến email của bạn");
+        }
+
+        /// <summary>
+        /// API xác thực mã email
+        /// </summary>
+        /// <param name="model">Email và mã xác thực</param>
+        /// <returns>Kết quả xác thực</returns>
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiBadRequest<object>(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            }
+
+            var result = await _authService.VerifyEmailAsync(model);
+            
+            if (!result.Success)
+            {
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(result.Data, "Xác thực email thành công");
+        }
+
+        /// <summary>
+        /// API kiểm tra email đã tồn tại chưa
+        /// </summary>
+        /// <param name="model">Email cần kiểm tra</param>
+        /// <returns>true nếu đã tồn tại, false nếu chưa tồn tại</returns>
+        [HttpPost("check-email")]
+        public async Task<IActionResult> CheckEmail([FromBody] EmailDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiBadRequest<object>(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            }
+
+            var result = await _authService.EmailExistsAsync(model.Email);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// API kiểm tra số điện thoại đã tồn tại chưa
         /// </summary>
         /// <param name="model">Số điện thoại cần kiểm tra</param>
@@ -102,6 +165,52 @@ namespace Hospital_BE.PL.Controllers
             }
 
             return ApiOk(result.Data, "Làm mới token thành công");
+        }
+
+        /// <summary>
+        /// API gửi email reset password
+        /// </summary>
+        /// <param name="model">Email cần reset password</param>
+        /// <returns>Kết quả gửi email</returns>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiBadRequest<object>(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            }
+
+            var result = await _authService.SendForgotPasswordEmailAsync(model);
+            
+            if (!result.Success)
+            {
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(new { success = true }, result.Message);
+        }
+
+        /// <summary>
+        /// API validate token reset password
+        /// </summary>
+        /// <param name="token">Token cần validate</param>
+        /// <returns>Kết quả validate</returns>
+        [HttpGet("validate-reset-token")]
+        public async Task<IActionResult> ValidateResetToken([FromQuery] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return ApiBadRequest<object>("Token là bắt buộc");
+            }
+
+            var result = await _authService.ValidateResetPasswordTokenAsync(token);
+            
+            if (!result.Success)
+            {
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(new { email = result.Data }, "Token hợp lệ");
         }
     }
 } 

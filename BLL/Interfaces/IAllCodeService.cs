@@ -56,5 +56,12 @@ namespace Hospital_BE.BLL.Interfaces
         /// <param name="id">ID của mã</param>
         /// <returns>true nếu thành công, false nếu thất bại</returns>
         Task<bool> DeleteAllcodeAsync(int id);
+        
+        /// <summary>
+        /// Lấy danh sách mã theo loại (không phân trang) - dùng cho dropdown
+        /// </summary>
+        /// <param name="codeType">Loại mã</param>
+        /// <returns>Danh sách mã</returns>
+        Task<List<Allcode>> GetAllCodeOptionsByTypeAsync(string codeType);
     }
 } 

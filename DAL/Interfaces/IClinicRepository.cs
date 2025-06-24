@@ -12,6 +12,7 @@ namespace Hospital_BE.DAL.Interfaces
         Task<(List<Clinic> Items, int TotalCount)> GetAllAsync(QueryParameters parameters);
         Task<Clinic> GetByIdAsync(Guid id);
         Task<ClinicDetailDto> GetDetailByIdAsync(Guid id);
+        Task<ClinicDetailDto> GetDetailBySlugAsync(string slug);
         Task<Clinic> CreateAsync(Clinic clinic);
         Task<bool> UpdateAsync(Guid id, Clinic clinic);
         Task<bool> DeleteAsync(Guid id);

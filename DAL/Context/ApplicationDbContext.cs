@@ -20,6 +20,8 @@ namespace Hospital_BE.DAL.Context
         public DbSet<ClinicImage> ClinicImages { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
+        public DbSet<Article> Articles { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -46,9 +48,9 @@ namespace Hospital_BE.DAL.Context
                 
             // Index cho User
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Phone)
+                .HasIndex(u => u.Email)
                 .IsUnique()
-                .HasFilter("[Phone] IS NOT NULL");
+                .HasFilter("[Email] IS NOT NULL");
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Username)
@@ -189,6 +191,50 @@ namespace Hospital_BE.DAL.Context
 
             modelBuilder.Entity<Appointment>()
                 .HasIndex(a => a.PatientId);
+
+            // Cấu hình bảng Schedule
+            modelBuilder.Entity<Schedule>()
+                .HasKey(s => s.Id);
+
+            // Quan hệ: Schedule - User (Doctor)
+            modelBuilder.Entity<Schedule>()
+                .HasOne(s => s.Doctor)
+                .WithMany()
+                .HasForeignKey(s => s.DoctorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Quan hệ: Schedule - Allcode (TimeType)
+            modelBuilder.Entity<Schedule>()
+                .HasOne(s => s.TimeTypeAllcode)
+                .WithMany(a => a.ScheduleTimeTypes)
+                .HasForeignKey(s => s.TimeType)
+                .HasPrincipalKey(a => a.CodeKey)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Index để tránh trùng lịch khám
+            modelBuilder.Entity<Schedule>()
+                .HasIndex(s => new { s.DoctorId, s.Date, s.TimeType })
+                .IsUnique();
+
+            // Cấu hình bảng Article
+            modelBuilder.Entity<Article>()
+                .HasKey(a => a.ArticleId);
+
+            // Quan hệ: Article - User (Author)
+            modelBuilder.Entity<Article>()
+                .HasOne(a => a.Author)
+                .WithMany()
+                .HasForeignKey(a => a.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Index cho Article
+            modelBuilder.Entity<Article>()
+                .HasIndex(a => a.Slug)
+                .IsUnique()
+                .HasFilter("[Slug] IS NOT NULL");
+
+            modelBuilder.Entity<Article>()
+                .HasIndex(a => a.PublishedAt);
 
             base.OnModelCreating(modelBuilder);
 

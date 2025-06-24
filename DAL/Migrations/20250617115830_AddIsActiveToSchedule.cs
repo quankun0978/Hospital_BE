@@ -5,25 +5,25 @@
 namespace Hospital_BE.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class RemoveIsActiveFromRefreshToken : Migration
+    public partial class AddIsActiveToSchedule : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
+            migrationBuilder.AddColumn<bool>(
                 name: "IsActive",
-                table: "RefreshTokens");
+                table: "Schedules",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
+            migrationBuilder.DropColumn(
                 name: "IsActive",
-                table: "RefreshTokens",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
+                table: "Schedules");
         }
     }
 }

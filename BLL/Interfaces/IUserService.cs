@@ -11,11 +11,11 @@ namespace Hospital_BE.BLL.Interfaces
     public interface IUserService
     {
         /// <summary>
-        /// Kiểm tra số điện thoại đã tồn tại chưa
+        /// Kiểm tra email đã tồn tại chưa
         /// </summary>
-        /// <param name="phone">Số điện thoại cần kiểm tra</param>
+        /// <param name="email">Email cần kiểm tra</param>
         /// <returns>true nếu đã tồn tại, false nếu chưa tồn tại</returns>
-        Task<bool> CheckPhoneExistsAsync(string phone);
+        Task<bool> CheckEmailExistsAsync(string email);
         
         /// <summary>
         /// Lấy danh sách tất cả người dùng
@@ -65,5 +65,35 @@ namespace Hospital_BE.BLL.Interfaces
         /// <param name="id">ID của người dùng</param>
         /// <returns>Thông tin chi tiết người dùng</returns>
         Task<UserDTO> GetUserDetailAsync(string id);
+        
+        /// <summary>
+        /// Kiểm tra người dùng có tồn tại với role cụ thể hay không
+        /// </summary>
+        /// <param name="userId">ID của người dùng</param>
+        /// <param name="roleId">ID của role</param>
+        /// <returns>Kết quả kiểm tra</returns>
+        Task<ServiceResult<bool>> CheckUserExistsAsync(Guid userId, string roleId);
+        
+        /// <summary>
+        /// Lấy danh sách người dùng theo role
+        /// </summary>
+        /// <param name="roleId">ID của role</param>
+        /// <returns>Danh sách người dùng</returns>
+        Task<ServiceResult<List<User>>> GetUsersByRoleAsync(string roleId);
+
+        /// <summary>
+        /// Reset mật khẩu người dùng
+        /// </summary>
+        /// <param name="model">Thông tin reset password</param>
+        /// <returns>Kết quả reset</returns>
+        Task<ServiceResult> ResetPasswordAsync(ResetPasswordDTO model);
+
+        /// <summary>
+        /// Đổi mật khẩu người dùng
+        /// </summary>
+        /// <param name="userId">ID người dùng</param>
+        /// <param name="model">Thông tin đổi password</param>
+        /// <returns>Kết quả đổi password</returns>
+        Task<ServiceResult> ChangePasswordAsync(string userId, ChangePasswordDTO model);
     }
 } 

@@ -19,7 +19,7 @@ namespace Hospital_BE.PL.Controllers
         /// <summary>
         /// Lấy danh sách mã theo loại
         /// </summary>
-        /// <param name="codeType">Loại mã (ví dụ: ROLE, POSITION, PRICE, ...)</param>
+        /// <param name="codeType">Loại mã (ví dụ: ROLE, POSITION, PRICE, TIME, ...)</param>
         /// <param name="parameters">Tham số phân trang</param>
         /// <returns>Danh sách mã theo loại</returns>
         [HttpGet("by-type/{codeType}")]
@@ -28,6 +28,18 @@ namespace Hospital_BE.PL.Controllers
             var result = await _allCodeService.GetAllCodesByTypeAsync(codeType, parameters);
             AddPaginationHeader(result);
             return ApiOk(result.Data, $"Lấy danh sách mã loại {codeType} thành công");
+        }
+
+        /// <summary>
+        /// Lấy danh sách mã theo loại (không phân trang) - dùng cho dropdown
+        /// </summary>
+        /// <param name="codeType">Loại mã (ví dụ: TIME, ROLE, POSITION, ...)</param>
+        /// <returns>Danh sách mã theo loại</returns>
+        [HttpGet("options/{codeType}")]
+        public async Task<IActionResult> GetAllCodeOptions(string codeType)
+        {
+            var result = await _allCodeService.GetAllCodeOptionsByTypeAsync(codeType);
+            return ApiOk(result, $"Lấy danh sách tùy chọn loại {codeType} thành công");
         }
 
         /// <summary>

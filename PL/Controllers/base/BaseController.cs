@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using Hospital_BE.PL.DTOs.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,56 @@ namespace Hospital_BE.PL.Controllers.Base
     [Route("api/[controller]")]
     public abstract class BaseController : ControllerBase
     {
+        /// <summary>
+        /// Lấy ID của user hiện tại từ token
+        /// </summary>
+        /// <returns>User ID</returns>
+        protected string GetCurrentUserId()
+        {
+            return User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Lấy ID của user hiện tại từ token dưới dạng Guid
+        /// </summary>
+        /// <returns>User ID as Guid</returns>
+        protected Guid GetCurrentUserIdAsGuid()
+        {
+            var userIdString = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                return userId;
+            }
+            return Guid.Empty;
+        }
+
+        /// <summary>
+        /// Lấy email của user hiện tại từ token
+        /// </summary>
+        /// <returns>Email</returns>
+        protected string GetCurrentUserEmail()
+        {
+            return User?.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Lấy tên của user hiện tại từ token
+        /// </summary>
+        /// <returns>User name</returns>
+        protected string GetCurrentUserName()
+        {
+            return User?.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Lấy role của user hiện tại từ token
+        /// </summary>
+        /// <returns>Role</returns>
+        protected string GetCurrentUserRole()
+        {
+            return User?.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+        }
+
         /// <summary>
         /// Trả về kết quả phân trang cho một truy vấn IQueryable
         /// </summary>
@@ -49,6 +100,16 @@ namespace Hospital_BE.PL.Controllers.Base
         protected IActionResult ApiOk<T>(T data, string message = null)
         {
             return ApiResponseHelper.Ok(this, data, message);
+        }
+        
+        /// <summary>
+        /// Trả về một phản hồi API thất bại
+        /// </summary>
+        /// <param name="error">Thông báo lỗi</param>
+        /// <returns>Kết quả API thất bại</returns>
+        protected IActionResult ApiBadRequest(string error)
+        {
+            return ApiResponseHelper.BadRequest<object>(this, error);
         }
         
         /// <summary>
@@ -115,6 +176,27 @@ namespace Hospital_BE.PL.Controllers.Base
         protected void AddPaginationHeader<T>(PaginatedResult<T> result)
         {
             ApiResponseHelper.AddPaginationHeader(this, result);
+        }
+        
+        /// <summary>
+        /// Trả về một phản hồi API 403 Forbidden
+        /// </summary>
+        /// <param name="message">Thông báo lỗi</param>
+        /// <returns>Kết quả API Forbidden</returns>
+        protected IActionResult ApiForbidden(string message)
+        {
+            return ApiResponseHelper.Forbidden<object>(this, message);
+        }
+        
+        /// <summary>
+        /// Trả về một phản hồi API 403 Forbidden
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu của kết quả</typeparam>
+        /// <param name="message">Thông báo lỗi</param>
+        /// <returns>Kết quả API Forbidden</returns>
+        protected IActionResult ApiForbidden<T>(string message)
+        {
+            return ApiResponseHelper.Forbidden<T>(this, message);
         }
     }
 } 

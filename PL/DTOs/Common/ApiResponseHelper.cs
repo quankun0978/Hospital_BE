@@ -60,6 +60,30 @@ namespace Hospital_BE.PL.DTOs.Common
         }
         
         /// <summary>
+        /// Tạo phản hồi lỗi 403 Forbidden
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu của kết quả</typeparam>
+        /// <param name="controller">Controller gốc</param>
+        /// <param name="message">Thông báo lỗi</param>
+        /// <returns>Kết quả API lỗi Forbidden</returns>
+        public static IActionResult Forbidden<T>(ControllerBase controller, string message)
+        {
+            var response = ApiResponse<T>.Failure(message);
+            return new ObjectResult(response) { StatusCode = 403 };
+        }
+
+        /// <summary>
+        /// Tạo phản hồi lỗi 500 Internal Server Error
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu của kết quả</typeparam>
+        /// <param name="message">Thông báo lỗi</param>
+        /// <returns>Kết quả API lỗi Internal Server Error</returns>
+        public static ApiResponse<T> Error<T>(string message)
+        {
+            return ApiResponse<T>.Failure(message);
+        }
+        
+        /// <summary>
         /// Tạo phản hồi thành công 201 Created
         /// </summary>
         /// <typeparam name="T">Kiểu dữ liệu của kết quả</typeparam>

@@ -21,6 +21,27 @@ namespace Hospital_BE.BLL.Interfaces
         Task<ServiceResult<LoginResponseDTO>> LoginAsync(LoginDTO model);
 
         /// <summary>
+        /// Gửi mã xác thực email
+        /// </summary>
+        /// <param name="model">Email cần gửi mã xác thực</param>
+        /// <returns>Kết quả gửi mã</returns>
+        Task<ServiceResult> SendEmailVerificationAsync(SendEmailVerificationDTO model);
+
+        /// <summary>
+        /// Xác thực mã email
+        /// </summary>
+        /// <param name="model">Email và mã xác thức</param>
+        /// <returns>Kết quả xác thực</returns>
+        Task<ServiceResult> VerifyEmailAsync(VerifyEmailDTO model);
+
+        /// <summary>
+        /// Kiểm tra email đã tồn tại chưa
+        /// </summary>
+        /// <param name="email">Email cần kiểm tra</param>
+        /// <returns>true nếu đã tồn tại, false nếu chưa tồn tại</returns>
+        Task<ServiceResult> EmailExistsAsync(string email);
+
+        /// <summary>
         /// Kiểm tra số điện thoại đã tồn tại chưa
         /// </summary>
         /// <param name="phone">Số điện thoại cần kiểm tra</param>
@@ -33,5 +54,19 @@ namespace Hospital_BE.BLL.Interfaces
         /// <param name="model">Refresh token request</param>
         /// <returns>Tokens mới</returns>
         Task<ServiceResult<RefreshTokenResponseDTO>> RefreshTokenAsync(RefreshTokenRequestDTO model);
+
+        /// <summary>
+        /// Gửi email reset password
+        /// </summary>
+        /// <param name="model">Email cần reset password</param>
+        /// <returns>Kết quả gửi email</returns>
+        Task<ServiceResult> SendForgotPasswordEmailAsync(ForgotPasswordDTO model);
+
+        /// <summary>
+        /// Xác thực token reset password
+        /// </summary>
+        /// <param name="token">Token reset password</param>
+        /// <returns>Email của user nếu token hợp lệ</returns>
+        Task<ServiceResult<string>> ValidateResetPasswordTokenAsync(string token);
     }
 } 

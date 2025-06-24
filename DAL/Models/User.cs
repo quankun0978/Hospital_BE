@@ -30,11 +30,13 @@ namespace Hospital_BE.DAL.Models
         [StringLength(256)]
         public string Password { get; set; }
 
+     
+
         /// <summary>
-        /// Số điện thoại, phải duy nhất trong hệ thống
+        /// Địa chỉ email, phải duy nhất trong hệ thống
         /// </summary>
-        [StringLength(15)]
-        public string? Phone { get; set; }
+        [StringLength(255)]
+        public string? Email { get; set; }
 
         /// <summary>
         /// Tên người dùng

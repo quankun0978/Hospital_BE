@@ -8,10 +8,10 @@ namespace Hospital_BE.DAL.Interfaces
 {
     public interface IUserRepository
     {
-        Task<bool> ExistsByPhoneAsync(string phone);
+        Task<bool> ExistsByEmailAsync(string email);
         Task<bool> ExistsByUsernameAsync(string username);
         Task<User> CreateAsync(User user);
-        Task<User> GetByPhoneAsync(string phone);
+        Task<User> GetByEmailAsync(string email);
         Task<User> GetByIdAsync(Guid userId);
         Task<(List<User> Items, int TotalCount)> GetAllAsync(QueryParameters parameters);
         Task SaveChangesAsync();

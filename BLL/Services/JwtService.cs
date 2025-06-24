@@ -33,8 +33,8 @@ namespace Hospital_BE.BLL.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.Name ?? ""),
-                new Claim(ClaimTypes.MobilePhone, user.Phone ?? ""),
-                new Claim("roleId", user.RoleId ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Role, user.RoleId ?? ""),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -95,7 +95,7 @@ namespace Hospital_BE.BLL.Services
                 {
                     UserId = user.UserId.ToString(),
                     Name = user.Name,
-                    Phone = user.Phone,
+                    Email = user.Email,
                     RoleId = user.RoleId,
                     Username = user.Username
                 }

@@ -5,11 +5,11 @@ using Hospital_BE.BLL.Services;
 using Hospital_BE.PL.Controllers.Base;
 using Hospital_BE.PL.DTOs.Common;
 using Hospital_BE.PL.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hospital_BE.PL.Controllers
 {
-    [Authorize]
     public class AppointmentController : BaseController
     {
         private readonly AppointmentService _appointmentService;
@@ -96,6 +96,21 @@ namespace Hospital_BE.PL.Controllers
         }
 
         /// <summary>
+        /// Lấy danh sách lịch hẹn theo người dùng
+        /// </summary>
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetAppointmentsByUser(Guid userId)
+        {
+            var result = await _appointmentService.GetAppointmentsByUserIdAsync(userId);
+            if (!result.Success)
+            {
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(result.Data, "Lấy danh sách lịch khám theo người dùng thành công");
+        }
+
+        /// <summary>
         /// Cập nhật trạng thái lịch hẹn
         /// </summary>
         [HttpPut("{id}/status")]
@@ -155,6 +170,49 @@ namespace Hospital_BE.PL.Controllers
             }
 
             return ApiOk(new { success = true }, result.Message);
+        }
+
+        /// <summary>
+        /// Xác nhận lịch hẹn qua email (không cần authentication)
+        /// </summary>
+        [HttpGet("confirm/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmAppointmentByEmail(Guid id, [FromQuery] string token = "")
+        {
+            // Có thể thêm validation token nếu cần bảo mật hơn
+            var result = await _appointmentService.ConfirmAppointmentAsync(id);
+            if (!result.Success)
+            {
+                if (result.Message.Contains("không tìm thấy"))
+                {
+                    return ApiNotFound<object>(result.Message);
+                }
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            // Trả về một trang HTML đơn giản thông báo thành công
+            var htmlContent = @"
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Xác nhận lịch khám</title>
+                    <meta charset='utf-8'>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .success { color: #28a745; }
+                        .container { max-width: 600px; margin: 0 auto; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <h2 class='success'>✅ Xác nhận lịch khám thành công!</h2>
+                        <p>Lịch khám của bạn đã được xác nhận. Vui lòng đến đúng giờ hẹn.</p>
+                        <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.</p>
+                    </div>
+                </body>
+                </html>";
+
+            return Content(htmlContent, "text/html");
         }
     }
 

@@ -29,7 +29,7 @@ namespace Hospital_BE.BLL.Services
                 DoctorId = doctorInfo.Doctor.UserId,
                 Name = doctorInfo.Doctor.Name,
                 Username = doctorInfo.Doctor.Username,
-                Phone = doctorInfo.Doctor.Phone,
+                Email = doctorInfo.Doctor.Email,
                 RoleId = doctorInfo.Doctor.RoleId,
                 RoleName = doctorInfo.Doctor.Role?.ValueVi,
                 DoctorInfos = new List<DoctorInfoDto>
@@ -66,7 +66,7 @@ namespace Hospital_BE.BLL.Services
                 DoctorId = doctorInfo.Doctor.UserId,
                 Name = doctorInfo.Doctor.Name,
                 Username = doctorInfo.Doctor.Username,
-                Phone = doctorInfo.Doctor.Phone,
+                Email = doctorInfo.Doctor.Email,
                 RoleId = doctorInfo.Doctor.RoleId,
                 RoleName = doctorInfo.Doctor.Role?.ValueVi,
                 DoctorInfos = new List<DoctorInfoDto>
@@ -152,7 +152,7 @@ namespace Hospital_BE.BLL.Services
                 DoctorId = doctorInfo.Doctor.UserId,
                 Name = doctorInfo.Doctor.Name,
                 Username = doctorInfo.Doctor.Username,
-                Phone = doctorInfo.Doctor.Phone,
+                Email = doctorInfo.Doctor.Email,
                 RoleId = doctorInfo.Doctor.RoleId,
                 RoleName = doctorInfo.Doctor.Role?.ValueVi,
                 DoctorInfos = allDoctorInfos.Select(di => new DoctorInfoDto

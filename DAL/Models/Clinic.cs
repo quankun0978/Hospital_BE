@@ -39,7 +39,7 @@ namespace Hospital_BE.DAL.Models
         /// <summary>
         /// Đường dẫn thân (URL slug) cho SEO
         /// </summary>
-        [Column(TypeName = "ntext")]
+        [StringLength(500)]
         public string Slug { get; set; }
 
         /// <summary>

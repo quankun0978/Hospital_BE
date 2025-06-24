@@ -9,6 +9,7 @@ namespace Hospital_BE.DAL.Interfaces
     public interface IAllcodeRepository
     {
         Task<(List<Allcode> Items, int TotalCount)> GetByTypeAsync(string codeType, PaginationParameters parameters);
+        Task<List<Allcode>> GetByTypeWithoutPaginationAsync(string codeType);
         Task<List<string>> GetAllCodeTypesAsync();
         Task<(List<Allcode> Items, int TotalCount)> GetAllCodesAsync(QueryParameters parameters);
         Task<Allcode> GetByIdAsync(int id);

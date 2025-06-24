@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hospital_BE.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250611170908_RemoveIsActiveFromRefreshToken")]
-    partial class RemoveIsActiveFromRefreshToken
+    [Migration("20250617050504_UpdateScheduleModel")]
+    partial class UpdateScheduleModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -166,7 +166,8 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("ntext");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.HasKey("ClinicId");
 
@@ -363,6 +364,38 @@ namespace Hospital_BE.DAL.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Schedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Date");
+
+                    b.Property<Guid>("DoctorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("DoctorId");
+
+                    b.Property<string>("TimeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("TimeType");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeType");
+
+                    b.HasIndex("DoctorId", "Date", "TimeType")
+                        .IsUnique();
+
+                    b.ToTable("Schedules");
+                });
+
             modelBuilder.Entity("Hospital_BE.DAL.Models.Specialty", b =>
                 {
                     b.Property<Guid>("SpecialtyId")
@@ -398,6 +431,10 @@ namespace Hospital_BE.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -407,10 +444,6 @@ namespace Hospital_BE.DAL.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
@@ -423,9 +456,9 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("Phone")
+                    b.HasIndex("Email")
                         .IsUnique()
-                        .HasFilter("[Phone] IS NOT NULL");
+                        .HasFilter("[Email] IS NOT NULL");
 
                     b.HasIndex("RoleId");
 
@@ -568,6 +601,26 @@ namespace Hospital_BE.DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Schedule", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Hospital_BE.DAL.Models.Allcode", "TimeTypeAllcode")
+                        .WithMany("ScheduleTimeTypes")
+                        .HasForeignKey("TimeType")
+                        .HasPrincipalKey("CodeKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("TimeTypeAllcode");
+                });
+
             modelBuilder.Entity("Hospital_BE.DAL.Models.User", b =>
                 {
                     b.HasOne("Hospital_BE.DAL.Models.Allcode", "Role")
@@ -585,6 +638,8 @@ namespace Hospital_BE.DAL.Migrations
                     b.Navigation("DoctorPositions");
 
                     b.Navigation("DoctorPrices");
+
+                    b.Navigation("ScheduleTimeTypes");
 
                     b.Navigation("UserRoles");
                 });

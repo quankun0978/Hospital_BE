@@ -63,5 +63,10 @@ namespace Hospital_BE.BLL.Services
         {
             return await _allcodeRepository.DeleteAsync(id);
         }
+
+        public async Task<List<Allcode>> GetAllCodeOptionsByTypeAsync(string codeType)
+        {
+            return await _allcodeRepository.GetByTypeWithoutPaginationAsync(codeType);
+        }
     }
 } 

@@ -68,6 +68,16 @@ namespace Hospital_BE.DAL.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Appointment>> GetByUserIdAsync(Guid userId)
+        {
+            return await _context.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Doctor)
+                .Where(a => a.Patient.UserId == userId)
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToListAsync();
+        }
+
         public async Task<Appointment> UpdateAsync(Appointment appointment)
         {
             appointment.UpdatedAt = DateTime.Now;

@@ -66,9 +66,37 @@ namespace Hospital_BE.DAL.Repositories
 
             if (clinic == null) return null;
 
+            return await BuildClinicDetailDto(clinic);
+        }
+
+        public async Task<ClinicDetailDto> GetDetailBySlugAsync(string slug)
+        {
+            // Truy vấn clinic theo slug cùng với tất cả thông tin liên quan
+            // Sử dụng EF.Functions.Like để tránh lỗi ntext comparison
+            var clinic = await _context.Clinics
+                .Include(c => c.Doctors)
+                    .ThenInclude(d => d.Doctor)
+                .Include(c => c.Doctors)
+                    .ThenInclude(d => d.Position)
+                .Include(c => c.Doctors)
+                    .ThenInclude(d => d.Price)
+                .Include(c => c.ClinicImages)
+                .FirstOrDefaultAsync(c => c.Slug.StartsWith(slug) && c.Slug.EndsWith(slug) && c.Slug.Length == slug.Length);
+
+            if (clinic == null) return null;
+
+            return await BuildClinicDetailDto(clinic);
+        }
+
+        private async Task<ClinicDetailDto> BuildClinicDetailDto(Clinic clinic)
+        {
+            // Lấy thông tin Markdown của clinic
+            var markdown = await _context.Markdowns
+                .FirstOrDefaultAsync(m => m.ClinicId == clinic.ClinicId);
+
             // Lấy danh sách specialties và doctor-clinic-specialty relationships
             var doctorClinicSpecialties = await _context.DoctorClinicSpecialties
-                .Where(dcs => dcs.ClinicId == id)
+                .Where(dcs => dcs.ClinicId == clinic.ClinicId)
                 .Include(dcs => dcs.Specialty)
                 .Include(dcs => dcs.Doctor)
                 .ToListAsync();
@@ -100,6 +128,8 @@ namespace Hospital_BE.DAL.Repositories
                 ImageUrl = clinic.ImageUrl,
                 LogoImg = clinic.LogoImg,
                 IsHospital = clinic.IsHospital,
+                ContentHTML = markdown?.ContentHTML,
+                ContentMarkdown = markdown?.ContentMarkdown,
                 ClinicImages = clinic.ClinicImages?.Select(ci => new ClinicImageDto
                 {
                     Id = ci.Id,

@@ -5,7 +5,19 @@ namespace Hospital_BE.PL.DTOs.Common
     /// </summary>
     public class QueryParameters : PaginationParameters
     {
-        // Hiện tại chỉ kế thừa từ PaginationParameters
-        // Có thể bổ sung thêm các thuộc tính tìm kiếm và sắp xếp trong tương lai
+        /// <summary>
+        /// Từ khóa tìm kiếm
+        /// </summary>
+        public string? SearchTerm { get; set; }
+        
+        /// <summary>
+        /// Trường sắp xếp
+        /// </summary>
+        public string? SortBy { get; set; } = "UpdatedAt";
+        
+        /// <summary>
+        /// Hướng sắp xếp (asc, desc)
+        /// </summary>
+        public string? SortOrder { get; set; } = "desc";
     }
 } 

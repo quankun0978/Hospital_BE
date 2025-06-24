@@ -13,10 +13,12 @@ namespace Hospital_BE.BLL.Services
     public class ClinicService : IClinicService
     {
         private readonly IClinicRepository _clinicRepository;
+        private readonly IClinicImageService _clinicImageService;
 
-        public ClinicService(IClinicRepository clinicRepository)
+        public ClinicService(IClinicRepository clinicRepository, IClinicImageService clinicImageService)
         {
             _clinicRepository = clinicRepository;
+            _clinicImageService = clinicImageService;
         }
 
         public async Task<PaginatedResult<Clinic>> GetClinicsAsync(QueryParameters parameters)
@@ -28,6 +30,11 @@ namespace Hospital_BE.BLL.Services
         public async Task<ClinicDetailDto> GetClinicByIdAsync(Guid id)
         {
             return await _clinicRepository.GetDetailByIdAsync(id);
+        }
+
+        public async Task<ClinicDetailDto> GetClinicBySlugAsync(string slug)
+        {
+            return await _clinicRepository.GetDetailBySlugAsync(slug);
         }
 
         public async Task<Clinic> GetClinicEntityByIdAsync(Guid id)
@@ -48,6 +55,18 @@ namespace Hospital_BE.BLL.Services
         public async Task<bool> DeleteClinicAsync(Guid id)
         {
             return await _clinicRepository.DeleteAsync(id);
+        }
+
+        public async Task<ClinicImage> AddClinicImageAsync(Guid clinicId, string imageUrl, bool isBackground = false)
+        {
+            var clinicImage = new ClinicImage
+            {
+                ClinicId = clinicId,
+                ImageFallbackUrl = imageUrl,
+                IsBackground = isBackground
+            };
+
+            return await _clinicImageService.CreateImageAsync(clinicImage);
         }
     }
 } 

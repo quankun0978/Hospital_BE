@@ -20,17 +20,16 @@ namespace Hospital_BE.PL.DTOs
         [StringLength(255, ErrorMessage = "Họ và tên tối đa 255 ký tự")]
         public string Name { get; set; }
 
-        [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
-        [StringLength(15, ErrorMessage = "Số điện thoại tối đa 15 ký tự")]
-        [RegularExpression(@"^(0|\+84)(\d{9})$", ErrorMessage = "Số điện thoại không đúng định dạng")]
-        public string? Phone { get; set; }
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [StringLength(255, ErrorMessage = "Email tối đa 255 ký tự")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; }
 
         public string? PhonePatient { get; set; }
 
-
         [Required(ErrorMessage = "Mã vai trò là bắt buộc")]
         [StringLength(50, ErrorMessage = "Mã vai trò tối đa 50 ký tự")]
-        public string RoleId { get; set; } = "R2"; // Mặc định là bệnh nhân
+        public string RoleId { get; set; } = "R3"; // Mặc định là bệnh nhân
 
         // Thông tin PatientRecord (có thể bổ sung thêm)
         [StringLength(255, ErrorMessage = "Họ và tên đầy đủ tối đa 255 ký tự")]
@@ -45,9 +44,8 @@ namespace Hospital_BE.PL.DTOs
         [StringLength(255, ErrorMessage = "Địa chỉ tối đa 255 ký tự")]
         public string Address { get; set; }
 
-        [StringLength(255, ErrorMessage = "Email tối đa 255 ký tự")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        public string Email { get; set; }
+        [StringLength(15, ErrorMessage = "Số điện thoại tối đa 15 ký tự")]
+        public string Phone { get; set; }
 
         [StringLength(20, ErrorMessage = "Số bảo hiểm y tế tối đa 20 ký tự")]
         public string HealthInsuranceNumber { get; set; }
@@ -62,7 +60,7 @@ namespace Hospital_BE.PL.DTOs
         public string PatientId { get; set; }
         public string Username { get; set; }
         public string Name { get; set; }
-        public string Phone { get; set; }
+        public string Email { get; set; }
     }
 
     /// <summary>
@@ -70,12 +68,36 @@ namespace Hospital_BE.PL.DTOs
     /// </summary>
     public class LoginDTO
     {
-        [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
-        [StringLength(15, ErrorMessage = "Số điện thoại tối đa 15 ký tự")]
-        public string Phone { get; set; }
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; }
 
         [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
         public string Password { get; set; }
+    }
+
+    /// <summary>
+    /// DTO gửi mã xác thực email
+    /// </summary>
+    public class SendEmailVerificationDTO
+    {
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; }
+    }
+
+    /// <summary>
+    /// DTO xác thực mã email
+    /// </summary>
+    public class VerifyEmailDTO
+    {
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Mã xác thực là bắt buộc")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Mã xác thực phải có 6 ký tự")]
+        public string VerificationCode { get; set; }
     }
 
     /// <summary>
@@ -108,5 +130,59 @@ namespace Hospital_BE.PL.DTOs
         public string RefreshToken { get; set; }
         public DateTime AccessTokenExpiry { get; set; }
         public DateTime RefreshTokenExpiry { get; set; }
+    }
+
+    /// <summary>
+    /// DTO kiểm tra email tồn tại
+    /// </summary>
+    public class EmailDTO
+    {
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho forgot password request
+    /// </summary>
+    public class ForgotPasswordDTO
+    {
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho reset password request
+    /// </summary>
+    public class ResetPasswordDTO
+    {
+        [Required(ErrorMessage = "Token là bắt buộc")]
+        public string Token { get; set; }
+
+        [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+        [StringLength(256, MinimumLength = 6, ErrorMessage = "Mật khẩu phải từ 6 ký tự trở lên")]
+        public string NewPassword { get; set; }
+
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
+        public string ConfirmPassword { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho change password request
+    /// </summary>
+    public class ChangePasswordDTO
+    {
+        [Required(ErrorMessage = "Mật khẩu hiện tại là bắt buộc")]
+        public string CurrentPassword { get; set; }
+
+        [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+        [StringLength(256, MinimumLength = 6, ErrorMessage = "Mật khẩu phải từ 6 ký tự trở lên")]
+        public string NewPassword { get; set; }
+
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
+        public string ConfirmPassword { get; set; }
     }
 } 

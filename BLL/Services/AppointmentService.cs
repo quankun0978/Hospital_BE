@@ -7,6 +7,7 @@ using Hospital_BE.DAL.Context;
 using Hospital_BE.DAL.Models;
 using Hospital_BE.DAL.Repositories;
 using Hospital_BE.PL.DTOs.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hospital_BE.BLL.Services
 {
@@ -141,14 +142,28 @@ namespace Hospital_BE.BLL.Services
             }
         }
 
+        public async Task<ServiceResult<List<AppointmentDetailsDTO>>> GetAppointmentsByUserIdAsync(Guid userId)
+        {
+            try
+            {
+                var appointments = await _appointmentRepository.GetByUserIdAsync(userId);
+                var result = appointments.Select(MapToAppointmentDetailsDTO).ToList();
+                return ServiceResult<List<AppointmentDetailsDTO>>.Ok("Lấy danh sách lịch khám thành công.", result);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<List<AppointmentDetailsDTO>>.Error($"Lỗi khi lấy danh sách lịch khám: {ex.Message}");
+            }
+        }
+
         public async Task<ServiceResult> UpdateAppointmentStatusAsync(Guid appointmentId, string newStatus)
         {
             try
             {
-                            if (!new[] { "P", "S", "C", "N" }.Contains(newStatus))
-            {
-                return ServiceResult.Error("Trạng thái không hợp lệ.");
-            }
+                if (!new[] { "P", "S", "S1", "C", "N" }.Contains(newStatus))
+                {
+                    return ServiceResult.Error("Trạng thái không hợp lệ.");
+                }
 
                 var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
                 if (appointment == null)
@@ -157,12 +172,14 @@ namespace Hospital_BE.BLL.Services
                 }
 
                 appointment.Status = newStatus;
+                appointment.UpdatedAt = DateTime.Now;
                 await _appointmentRepository.UpdateAsync(appointment);
 
                 string statusText = newStatus switch
                 {
                     "P" => "Chờ xác nhận",
                     "S" => "Đã lên lịch",
+                    "S1" => "Đã xác nhận",
                     "C" => "Hoàn thành",
                     "N" => "Hủy",
                     _ => "Không xác định"
@@ -196,8 +213,24 @@ namespace Hospital_BE.BLL.Services
                     return ServiceResult.Error("Lịch khám này đã được xác nhận trước đó hoặc đã bị hủy.");
                 }
 
-                appointment.Status = "S"; // Confirmed/Scheduled
+                // Cập nhật status của appointment thành "S1" (Scheduled/Confirmed)
+                appointment.Status = "S1";
+                appointment.UpdatedAt = DateTime.Now;
                 await _appointmentRepository.UpdateAsync(appointment);
+
+                // Tìm và cập nhật IsActive của Schedule tương ứng về false
+                var schedule = await _context.Schedules
+                    .FirstOrDefaultAsync(s => 
+                        s.DoctorId == appointment.DoctorId && 
+                        s.Date.Date == appointment.AppointmentDate.Date && 
+                        s.TimeType == appointment.TimeType);
+
+                if (schedule != null)
+                {
+                    schedule.IsActive = false; // Đánh dấu slot này đã được đặt
+                    _context.Schedules.Update(schedule);
+                    await _context.SaveChangesAsync();
+                }
 
                 return ServiceResult.Ok("Xác nhận lịch khám thành công!");
             }
@@ -224,6 +257,7 @@ namespace Hospital_BE.BLL.Services
                 {
                     "P" => "Chờ xác nhận",
                     "S" => "Đã lên lịch",
+                    "S1" => "Đã xác nhận",
                     "C" => "Hoàn thành", 
                     "N" => "Hủy",
                     _ => "Không xác định"

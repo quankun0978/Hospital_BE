@@ -4,8 +4,13 @@ using Hospital_BE.BLL.Services;
 using Hospital_BE.DAL.Context;
 using Hospital_BE.DAL.Interfaces;
 using Hospital_BE.DAL.Repositories;
+using Hospital_BE.PL.Middleware;
 using System;
 using Microsoft.Extensions.FileProviders;
+using Meilisearch;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,27 +25,72 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 errorNumbersToAdd: null);
         }));
 
+// Cấu hình MeiliSearch
+var meiliSearchUrl = builder.Configuration.GetConnectionString("MeiliSearch") ?? "http://localhost:7700";
+var meiliSearchApiKey = builder.Configuration["MeiliSearch:ApiKey"]; // Có thể null cho development
+
+builder.Services.AddSingleton<MeilisearchClient>(serviceProvider =>
+{
+    return new MeilisearchClient(meiliSearchUrl, meiliSearchApiKey);
+});
+
 // Đăng ký repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPatientRecordRepository, PatientRecordRepository>();
 builder.Services.AddScoped<IAllcodeRepository, AllcodeRepository>();
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
+builder.Services.AddScoped<IClinicImageRepository, ClinicImageRepository>();
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
 builder.Services.AddScoped<ISpecialtyRepository, SpecialtyRepository>();
+builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 builder.Services.AddSingleton<IOTPRepository, OTPRepository>();
 
 // Đăng ký services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClinicService, ClinicService>();
+builder.Services.AddScoped<IClinicImageService, ClinicImageService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IAllCodeService, AllCodeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IMarkdownService, MarkdownService>();
 builder.Services.AddScoped<ISpecialtyService, SpecialtyService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<AppointmentService>();
+builder.Services.AddScoped<IArticleService, ArticleService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
-builder.Services.AddControllers();
+// Cấu hình JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"])),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -83,6 +133,8 @@ app.UseHttpsRedirection();
 // Sử dụng CORS
 app.UseCors("AllowAll");
 
+// Sử dụng Authentication và Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

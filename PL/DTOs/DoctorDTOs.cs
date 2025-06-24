@@ -29,6 +29,11 @@ namespace Hospital_BE.PL.DTOs
         public string Phone { get; set; }
 
         /// <summary>
+        /// Số điện thoại
+        /// </summary>
+        public string Email { get; set; }
+
+        /// <summary>
         /// Vai trò
         /// </summary>
         public string RoleId { get; set; }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hospital_BE.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250603022921_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250617115830_AddIsActiveToSchedule")]
+    partial class AddIsActiveToSchedule
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,35 @@ namespace Hospital_BE.DAL.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("DoctorClinicSpecialty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ClinicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DoctorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SpecialtyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicId");
+
+                    b.HasIndex("SpecialtyId");
+
+                    b.HasIndex("DoctorId", "ClinicId", "SpecialtyId")
+                        .IsUnique();
+
+                    b.ToTable("DoctorClinicSpecialties");
+                });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.Allcode", b =>
                 {
@@ -60,6 +89,49 @@ namespace Hospital_BE.DAL.Migrations
                     b.ToTable("Allcodes");
                 });
 
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Appointment", b =>
+                {
+                    b.Property<Guid>("AppointmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AppointmentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DoctorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
+
+                    b.Property<string>("TimeType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("AppointmentId");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("DoctorId", "AppointmentDate");
+
+                    b.ToTable("Appointments");
+                });
+
             modelBuilder.Entity("Hospital_BE.DAL.Models.Clinic", b =>
                 {
                     b.Property<Guid>("ClinicId")
@@ -94,11 +166,37 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("ntext");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.HasKey("ClinicId");
 
                     b.ToTable("Clinics");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.ClinicImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ClinicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ImageFallbackUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBackground")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicId");
+
+                    b.ToTable("ClinicImages");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.DoctorInfo", b =>
@@ -239,11 +337,107 @@ namespace Hospital_BE.DAL.Migrations
                     b.ToTable("PatientRecords");
                 });
 
+            modelBuilder.Entity("Hospital_BE.DAL.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Schedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Date");
+
+                    b.Property<Guid>("DoctorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("DoctorId");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsActive");
+
+                    b.Property<string>("TimeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("TimeType");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeType");
+
+                    b.HasIndex("DoctorId", "Date", "TimeType")
+                        .IsUnique();
+
+                    b.ToTable("Schedules");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Specialty", b =>
+                {
+                    b.Property<Guid>("SpecialtyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("ntext");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("ntext");
+
+                    b.HasKey("SpecialtyId");
+
+                    b.ToTable("Specialties");
+                });
+
             modelBuilder.Entity("Hospital_BE.DAL.Models.User", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -254,10 +448,6 @@ namespace Hospital_BE.DAL.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
@@ -270,9 +460,9 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("Phone")
+                    b.HasIndex("Email")
                         .IsUnique()
-                        .HasFilter("[Phone] IS NOT NULL");
+                        .HasFilter("[Email] IS NOT NULL");
 
                     b.HasIndex("RoleId");
 
@@ -281,6 +471,63 @@ namespace Hospital_BE.DAL.Migrations
                         .HasFilter("[Username] IS NOT NULL");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("DoctorClinicSpecialty", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.Clinic", "Clinic")
+                        .WithMany()
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Hospital_BE.DAL.Models.Specialty", "Specialty")
+                        .WithMany()
+                        .HasForeignKey("SpecialtyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Clinic");
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("Specialty");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Appointment", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Hospital_BE.DAL.Models.PatientRecord", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.ClinicImage", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.Clinic", "Clinic")
+                        .WithMany("ClinicImages")
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Clinic");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.DoctorInfo", b =>
@@ -347,6 +594,37 @@ namespace Hospital_BE.DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Hospital_BE.DAL.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Schedule", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Hospital_BE.DAL.Models.Allcode", "TimeTypeAllcode")
+                        .WithMany("ScheduleTimeTypes")
+                        .HasForeignKey("TimeType")
+                        .HasPrincipalKey("CodeKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("TimeTypeAllcode");
+                });
+
             modelBuilder.Entity("Hospital_BE.DAL.Models.User", b =>
                 {
                     b.HasOne("Hospital_BE.DAL.Models.Allcode", "Role")
@@ -365,11 +643,15 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.Navigation("DoctorPrices");
 
+                    b.Navigation("ScheduleTimeTypes");
+
                     b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.Clinic", b =>
                 {
+                    b.Navigation("ClinicImages");
+
                     b.Navigation("Doctors");
                 });
 

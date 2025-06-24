@@ -49,6 +49,16 @@ namespace Hospital_BE.PL.DTOs
         public bool IsHospital { get; set; }
 
         /// <summary>
+        /// Nội dung HTML giới thiệu từ Markdown
+        /// </summary>
+        public string ContentHTML { get; set; }
+
+        /// <summary>
+        /// Nội dung Markdown
+        /// </summary>
+        public string ContentMarkdown { get; set; }
+
+        /// <summary>
         /// Danh sách hình ảnh của phòng khám
         /// </summary>
         public List<ClinicImageDto> ClinicImages { get; set; }

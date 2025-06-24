@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hospital_BE.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250608164647_AddAppointmentTable")]
-    partial class AddAppointmentTable
+    [Migration("20250617044553_CreateSchedule")]
+    partial class CreateSchedule
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -166,7 +166,8 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("ntext");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.HasKey("ClinicId");
 
@@ -336,6 +337,65 @@ namespace Hospital_BE.DAL.Migrations
                     b.ToTable("PatientRecords");
                 });
 
+            modelBuilder.Entity("Hospital_BE.DAL.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Schedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date");
+
+                    b.Property<Guid>("DoctorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("doctorId");
+
+                    b.Property<string>("TimeType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("timeType");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeType");
+
+                    b.HasIndex("DoctorId", "Date", "TimeType")
+                        .IsUnique();
+
+                    b.ToTable("Schedules");
+                });
+
             modelBuilder.Entity("Hospital_BE.DAL.Models.Specialty", b =>
                 {
                     b.Property<Guid>("SpecialtyId")
@@ -371,6 +431,10 @@ namespace Hospital_BE.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -380,10 +444,6 @@ namespace Hospital_BE.DAL.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
@@ -396,9 +456,9 @@ namespace Hospital_BE.DAL.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("Phone")
+                    b.HasIndex("Email")
                         .IsUnique()
-                        .HasFilter("[Phone] IS NOT NULL");
+                        .HasFilter("[Email] IS NOT NULL");
 
                     b.HasIndex("RoleId");
 
@@ -528,6 +588,37 @@ namespace Hospital_BE.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Hospital_BE.DAL.Models.Schedule", b =>
+                {
+                    b.HasOne("Hospital_BE.DAL.Models.User", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Hospital_BE.DAL.Models.Allcode", "TimeTypeAllcode")
+                        .WithMany()
+                        .HasForeignKey("TimeType")
+                        .HasPrincipalKey("CodeKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("TimeTypeAllcode");
                 });
 
             modelBuilder.Entity("Hospital_BE.DAL.Models.User", b =>

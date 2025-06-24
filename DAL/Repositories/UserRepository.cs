@@ -19,9 +19,9 @@ namespace Hospital_BE.DAL.Repositories
             _context = context;
         }
 
-        public async Task<bool> ExistsByPhoneAsync(string phone)
+        public async Task<bool> ExistsByEmailAsync(string email)
         {
-            return await _context.Users.AnyAsync(u => u.Phone == phone);
+            return await _context.Users.AnyAsync(u => u.Email == email);
         }
 
         public async Task<bool> ExistsByUsernameAsync(string username)
@@ -36,9 +36,9 @@ namespace Hospital_BE.DAL.Repositories
             return user;
         }
 
-        public async Task<User> GetByPhoneAsync(string phone)
+        public async Task<User> GetByEmailAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == phone);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
                 return null;

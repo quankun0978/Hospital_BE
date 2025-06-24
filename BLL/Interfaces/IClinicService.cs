@@ -24,6 +24,13 @@ namespace Hospital_BE.BLL.Interfaces
         Task<ClinicDetailDto> GetClinicByIdAsync(Guid id);
         
         /// <summary>
+        /// Lấy thông tin chi tiết một phòng khám theo slug
+        /// </summary>
+        /// <param name="slug">Slug của phòng khám</param>
+        /// <returns>Thông tin phòng khám hoặc null nếu không tìm thấy</returns>
+        Task<ClinicDetailDto> GetClinicBySlugAsync(string slug);
+        
+        /// <summary>
         /// Lấy thông tin cơ bản của phòng khám theo ID (entity)
         /// </summary>
         /// <param name="id">ID của phòng khám</param>
@@ -51,5 +58,14 @@ namespace Hospital_BE.BLL.Interfaces
         /// <param name="id">ID của phòng khám</param>
         /// <returns>true nếu thành công, false nếu thất bại</returns>
         Task<bool> DeleteClinicAsync(Guid id);
+
+        /// <summary>
+        /// Thêm ảnh vào phòng khám
+        /// </summary>
+        /// <param name="clinicId">ID của phòng khám</param>
+        /// <param name="imageUrl">URL của ảnh</param>
+        /// <param name="isBackground">Có phải ảnh nền không</param>
+        /// <returns>ClinicImage đã tạo</returns>
+        Task<ClinicImage> AddClinicImageAsync(Guid clinicId, string imageUrl, bool isBackground = false);
     }
 } 
