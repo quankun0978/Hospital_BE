@@ -17,11 +17,13 @@ namespace Hospital_BE.PL.Controllers
     {
         private readonly IClinicService _clinicService;
         private readonly IImageService _imageService;
+        private readonly IMarkdownService _markdownService;
 
-        public ClinicController(IClinicService clinicService, IImageService imageService)
+        public ClinicController(IClinicService clinicService, IImageService imageService, IMarkdownService markdownService)
         {
             _clinicService = clinicService;
             _imageService = imageService;
+            _markdownService = markdownService;
         }
 
         /// <summary>
@@ -96,6 +98,20 @@ namespace Hospital_BE.PL.Controllers
 
                 var newClinic = await _clinicService.CreateClinicAsync(clinic);
 
+                // Create markdown content if provided
+                if (!string.IsNullOrEmpty(request.ContentHtml) || !string.IsNullOrEmpty(request.ContentMarkdown))
+                {
+                    var markdown = new Markdown
+                    {
+                        ClinicId = newClinic.ClinicId,
+                        ContentHTML = request.ContentHtml ?? "",
+                        ContentMarkdown = request.ContentMarkdown ?? "",
+                        Description = request.Description
+                    };
+
+                    await _markdownService.CreateMarkdownAsync(markdown);
+                }
+
                 return ApiCreated(newClinic, nameof(GetClinic), new { id = newClinic.ClinicId }, "Tạo phòng khám thành công");
             }
             catch (Exception ex)
@@ -152,6 +168,20 @@ namespace Hospital_BE.PL.Controllers
                 };
 
                 var newClinic = await _clinicService.CreateClinicAsync(clinic);
+
+                // Create markdown content if provided
+                if (!string.IsNullOrEmpty(request.ContentHtml) || !string.IsNullOrEmpty(request.ContentMarkdown))
+                {
+                    var markdown = new Markdown
+                    {
+                        ClinicId = newClinic.ClinicId,
+                        ContentHTML = request.ContentHtml ?? "",
+                        ContentMarkdown = request.ContentMarkdown ?? "",
+                        Description = request.Description
+                    };
+
+                    await _markdownService.CreateMarkdownAsync(markdown);
+                }
 
                 // Insert additional images into ClinicImage table if provided
                 if (request.AdditionalImages != null && request.AdditionalImages.Any())
@@ -213,6 +243,35 @@ namespace Hospital_BE.PL.Controllers
 
                 if (!result)
                     return ApiNotFound<object>("Không tìm thấy phòng khám");
+
+                // Update markdown content
+                var existingMarkdown = await _markdownService.GetMarkdownByClinicIdAsync(id);
+                
+                if (!string.IsNullOrEmpty(request.ContentHtml) || !string.IsNullOrEmpty(request.ContentMarkdown))
+                {
+                    if (existingMarkdown != null)
+                    {
+                        // Update existing markdown
+                        existingMarkdown.ContentHTML = request.ContentHtml ?? existingMarkdown.ContentHTML;
+                        existingMarkdown.ContentMarkdown = request.ContentMarkdown ?? existingMarkdown.ContentMarkdown;
+                        existingMarkdown.Description = request.Description ?? existingMarkdown.Description;
+                        
+                        await _markdownService.UpdateMarkdownAsync(existingMarkdown);
+                    }
+                    else
+                    {
+                        // Create new markdown
+                        var markdown = new Markdown
+                        {
+                            ClinicId = id,
+                            ContentHTML = request.ContentHtml ?? "",
+                            ContentMarkdown = request.ContentMarkdown ?? "",
+                            Description = request.Description
+                        };
+
+                        await _markdownService.CreateMarkdownAsync(markdown);
+                    }
+                }
 
                 return ApiOk(new { Success = true }, "Cập nhật phòng khám thành công");
             }
@@ -281,12 +340,66 @@ namespace Hospital_BE.PL.Controllers
                 if (!result)
                     return ApiNotFound<object>("Không tìm thấy phòng khám");
 
+                // Update markdown content
+                var existingMarkdown = await _markdownService.GetMarkdownByClinicIdAsync(id);
+                
+                if (!string.IsNullOrEmpty(request.ContentHtml) || !string.IsNullOrEmpty(request.ContentMarkdown))
+                {
+                    if (existingMarkdown != null)
+                    {
+                        // Update existing markdown
+                        existingMarkdown.ContentHTML = request.ContentHtml ?? existingMarkdown.ContentHTML;
+                        existingMarkdown.ContentMarkdown = request.ContentMarkdown ?? existingMarkdown.ContentMarkdown;
+                        existingMarkdown.Description = request.Description ?? existingMarkdown.Description;
+                        
+                        await _markdownService.UpdateMarkdownAsync(existingMarkdown);
+                    }
+                    else
+                    {
+                        // Create new markdown
+                        var markdown = new Markdown
+                        {
+                            ClinicId = id,
+                            ContentHTML = request.ContentHtml ?? "",
+                            ContentMarkdown = request.ContentMarkdown ?? "",
+                            Description = request.Description
+                        };
+
+                        await _markdownService.CreateMarkdownAsync(markdown);
+                    }
+                }
+
                 return ApiOk(new { Success = true }, "Cập nhật phòng khám thành công");
             }
             catch (Exception ex)
             {
                 return ApiBadRequest<object>(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Lấy nội dung markdown của phòng khám
+        /// </summary>
+        /// <param name="id">ID của phòng khám</param>
+        /// <returns>Nội dung markdown</returns>
+        [HttpGet("{id}/markdown")]
+        public async Task<IActionResult> GetClinicMarkdown(Guid id)
+        {
+            var markdown = await _markdownService.GetMarkdownByClinicIdAsync(id);
+
+            if (markdown == null)
+                return ApiNotFound<object>("Không tìm thấy nội dung markdown");
+
+            var result = new
+            {
+                Id = markdown.Id,
+                ClinicId = markdown.ClinicId,
+                ContentHTML = markdown.ContentHTML,
+                ContentMarkdown = markdown.ContentMarkdown,
+                Description = markdown.Description
+            };
+
+            return ApiOk(result, "Lấy nội dung markdown thành công");
         }
 
         /// <summary>
@@ -323,6 +436,13 @@ namespace Hospital_BE.PL.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClinic(Guid id)
         {
+            // Delete associated markdown content first
+            var existingMarkdown = await _markdownService.GetMarkdownByClinicIdAsync(id);
+            if (existingMarkdown != null)
+            {
+                await _markdownService.DeleteMarkdownAsync(existingMarkdown.Id);
+            }
+
             var result = await _clinicService.DeleteClinicAsync(id);
 
             if (!result)
@@ -344,6 +464,8 @@ namespace Hospital_BE.PL.Controllers
         public string ImageUrl { get; set; }
         public string LogoImg { get; set; }
         public bool? IsHospital { get; set; }
+        public string ContentHtml { get; set; }
+        public string ContentMarkdown { get; set; }
         public IFormFile ImageFile { get; set; }
         public IFormFile LogoFile { get; set; }
     }
@@ -360,6 +482,8 @@ namespace Hospital_BE.PL.Controllers
         public string ImageUrl { get; set; }
         public string LogoImg { get; set; }
         public bool? IsHospital { get; set; }
+        public string ContentHtml { get; set; }
+        public string ContentMarkdown { get; set; }
     }
 
     /// <summary>
@@ -376,6 +500,8 @@ namespace Hospital_BE.PL.Controllers
         public string ImageUrl { get; set; }
         public string LogoImg { get; set; }
         public bool? IsHospital { get; set; }
+        public string ContentHtml { get; set; }
+        public string ContentMarkdown { get; set; }
     }
 
     /// <summary>
@@ -392,6 +518,8 @@ namespace Hospital_BE.PL.Controllers
         public string ImageUrl { get; set; }
         public string LogoImg { get; set; }
         public bool? IsHospital { get; set; }
+        public string ContentHtml { get; set; }
+        public string ContentMarkdown { get; set; }
         
         // File uploads - không bắt buộc
         [DefaultValue(null)]

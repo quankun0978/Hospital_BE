@@ -16,13 +16,13 @@ namespace Hospital_BE.DAL.Models
         [MaxLength(500)]
         public string? Slug { get; set; }
 
-        [Column(TypeName = "TEXT")]
+        [Column(TypeName = "NVARCHAR(MAX)")]
         public string? Description { get; set; }
 
-        [Column(TypeName = "TEXT")]
+        [Column(TypeName = "NVARCHAR(MAX)")]
         public string? ContentHtml { get; set; }
 
-        [Column(TypeName = "TEXT")]
+        [Column(TypeName = "NVARCHAR(MAX)")]
         public string? Content { get; set; }
 
         [MaxLength(100)]

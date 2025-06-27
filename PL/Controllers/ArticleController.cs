@@ -230,20 +230,41 @@ namespace Hospital_BE.PL.Controllers
         {
             try
             {
-                // Debug logging
-                Console.WriteLine("=== CREATE ARTICLE DEBUG ===");
-                Console.WriteLine($"Title: {createDto.Title}");
-                Console.WriteLine($"ContentHtml length: {createDto.ContentHtml?.Length ?? 0}");
-                Console.WriteLine($"Has Vietnamese chars: {(createDto.ContentHtml != null && System.Text.RegularExpressions.Regex.IsMatch(createDto.ContentHtml, @"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", System.Text.RegularExpressions.RegexOptions.IgnoreCase))}");
-                Console.WriteLine("============================");
+                Console.WriteLine("=== CREATE ARTICLE CONTROLLER DEBUG ===");
+                Console.WriteLine($"Received DTO - Title: {createDto.Title}");
+                Console.WriteLine($"Received DTO - Description: {createDto.Description?.Substring(0, Math.Min(100, createDto.Description?.Length ?? 0))}...");
+                Console.WriteLine($"Received DTO - Content length: {createDto.Content?.Length ?? 0}");
+                Console.WriteLine($"Received DTO - ContentHtml length: {createDto.ContentHtml?.Length ?? 0}");
+                Console.WriteLine($"Content has Vietnamese: {(createDto.Content != null && System.Text.RegularExpressions.Regex.IsMatch(createDto.Content, @"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", System.Text.RegularExpressions.RegexOptions.IgnoreCase))}");
+                Console.WriteLine($"ContentHtml has Vietnamese: {(createDto.ContentHtml != null && System.Text.RegularExpressions.Regex.IsMatch(createDto.ContentHtml, @"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", System.Text.RegularExpressions.RegexOptions.IgnoreCase))}");
+                Console.WriteLine($"Content preview: {createDto.Content?.Substring(0, Math.Min(200, createDto.Content?.Length ?? 0))}...");
+                Console.WriteLine($"ContentHtml preview: {createDto.ContentHtml?.Substring(0, Math.Min(200, createDto.ContentHtml?.Length ?? 0))}...");
 
-                if (!ModelState.IsValid)
+                var currentUserId = GetCurrentUserIdAsGuid();
+                if (currentUserId == Guid.Empty)
                 {
-                    return ApiBadRequest("Dữ liệu không hợp lệ");
+                    return Unauthorized(ApiResponseHelper.Error<ArticleDto>("Không thể xác định người dùng"));
                 }
 
-                var authorId = GetCurrentUserIdAsGuid();
-                var result = await _articleService.CreateArticleAsync(createDto, authorId);
+                var createArticleDto = new Hospital_BE.PL.DTOs.CreateArticleDto
+                {
+                    Title = createDto.Title,
+                    Slug = createDto.Slug,
+                    Description = createDto.Description,
+                    Content = createDto.Content,
+                    ContentHtml = createDto.ContentHtml,
+                    Category = createDto.Category
+                };
+
+                Console.WriteLine("=== BEFORE SERVICE CALL ===");
+                Console.WriteLine($"Service DTO - Content: {createArticleDto.Content?.Substring(0, Math.Min(100, createArticleDto.Content?.Length ?? 0))}...");
+                Console.WriteLine($"Service DTO - ContentHtml: {createArticleDto.ContentHtml?.Substring(0, Math.Min(100, createArticleDto.ContentHtml?.Length ?? 0))}...");
+
+                var result = await _articleService.CreateArticleAsync(createArticleDto, currentUserId);
+                
+                Console.WriteLine($"Service result success: {result.Success}");
+                Console.WriteLine($"Service result message: {result.Message}");
+                Console.WriteLine("===============================");
 
                 if (result.Success)
                 {
@@ -269,6 +290,8 @@ namespace Hospital_BE.PL.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Exception in CreateArticle: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return ApiError($"Lỗi khi tạo bài viết: {ex.Message}");
             }
         }
@@ -282,13 +305,36 @@ namespace Hospital_BE.PL.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
+                Console.WriteLine("=== UPDATE ARTICLE CONTROLLER DEBUG ===");
+                Console.WriteLine($"Article ID: {id}");
+                Console.WriteLine($"Update DTO - Title: {updateDto.Title}");
+                Console.WriteLine($"Update DTO - Description: {updateDto.Description?.Substring(0, Math.Min(100, updateDto.Description?.Length ?? 0))}...");
+                Console.WriteLine($"Update DTO - Content length: {updateDto.Content?.Length ?? 0}");
+                Console.WriteLine($"Update DTO - ContentHtml length: {updateDto.ContentHtml?.Length ?? 0}");
+                Console.WriteLine($"Content has Vietnamese: {(updateDto.Content != null && System.Text.RegularExpressions.Regex.IsMatch(updateDto.Content, @"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", System.Text.RegularExpressions.RegexOptions.IgnoreCase))}");
+                Console.WriteLine($"ContentHtml has Vietnamese: {(updateDto.ContentHtml != null && System.Text.RegularExpressions.Regex.IsMatch(updateDto.ContentHtml, @"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", System.Text.RegularExpressions.RegexOptions.IgnoreCase))}");
+
+                var currentUserId = GetCurrentUserIdAsGuid();
+                if (currentUserId == Guid.Empty)
                 {
-                    return ApiBadRequest("Dữ liệu không hợp lệ");
+                    return Unauthorized(ApiResponseHelper.Error<ArticleDto>("Không thể xác định người dùng"));
                 }
 
-                var authorId = GetCurrentUserIdAsGuid();
-                var result = await _articleService.UpdateArticleAsync(id, updateDto, authorId);
+                var updateArticleDto = new Hospital_BE.PL.DTOs.UpdateArticleDto
+                {
+                    Title = updateDto.Title,
+                    Slug = updateDto.Slug,
+                    Description = updateDto.Description,
+                    Content = updateDto.Content,
+                    ContentHtml = updateDto.ContentHtml,
+                    Category = updateDto.Category
+                };
+
+                var result = await _articleService.UpdateArticleAsync(id, updateArticleDto, currentUserId);
+                
+                Console.WriteLine($"Update service result success: {result.Success}");
+                Console.WriteLine($"Update service result message: {result.Message}");
+                Console.WriteLine("===============================");
 
                 if (result.Success)
                 {
@@ -314,6 +360,8 @@ namespace Hospital_BE.PL.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Exception in UpdateArticle: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return ApiError($"Lỗi khi cập nhật bài viết: {ex.Message}");
             }
         }

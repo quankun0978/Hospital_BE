@@ -15,5 +15,8 @@ namespace Hospital_BE.DAL.Interfaces
         Task<User> GetByIdAsync(Guid userId);
         Task<(List<User> Items, int TotalCount)> GetAllAsync(QueryParameters parameters);
         Task SaveChangesAsync();
+        Task<User> GetByUsernameAsync(string username);
+        Task<IEnumerable<User>> GetUsersByRoleAsync(string roleId, QueryParameters queryParams);
+        Task<IEnumerable<User>> GetUsersByRoleWithoutDoctorInfoAsync(string roleId, QueryParameters queryParams);
     }
 } 

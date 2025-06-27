@@ -288,28 +288,20 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                if (!Guid.TryParse(userId, out Guid userGuid))
-                {
-                    return ServiceResult.Error("ID người dùng không hợp lệ");
-                }
-
-                var user = await _userRepository.GetByIdAsync(userGuid);
+                var user = await _userRepository.GetByIdAsync(Guid.Parse(userId));
                 if (user == null)
                 {
                     return ServiceResult.Error("Không tìm thấy người dùng");
                 }
 
-                // Verify current password
-                bool isCurrentPasswordValid = BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.Password);
-                if (!isCurrentPasswordValid)
+                // Verify old password
+                if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.Password))
                 {
-                    return ServiceResult.Error("Mật khẩu hiện tại không đúng");
+                    return ServiceResult.Error("Mật khẩu cũ không đúng");
                 }
 
                 // Hash new password
-                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
-                user.Password = hashedPassword;
-
+                user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
 
@@ -318,6 +310,32 @@ namespace Hospital_BE.BLL.Services
             catch (Exception ex)
             {
                 return ServiceResult.Error($"Lỗi khi đổi mật khẩu: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult<IEnumerable<User>>> GetUsersByRoleAsync(string roleId, QueryParameters queryParams)
+        {
+            try
+            {
+                var users = await _userRepository.GetUsersByRoleAsync(roleId, queryParams);
+                return ServiceResult<IEnumerable<User>>.Ok("Thành công", users);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<IEnumerable<User>>.Error($"Lỗi khi lấy danh sách users: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult<IEnumerable<User>>> GetUsersByRoleWithoutDoctorInfoAsync(string roleId, QueryParameters queryParams)
+        {
+            try
+            {
+                var users = await _userRepository.GetUsersByRoleWithoutDoctorInfoAsync(roleId, queryParams);
+                return ServiceResult<IEnumerable<User>>.Ok("Thành công", users);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<IEnumerable<User>>.Error($"Lỗi khi lấy danh sách users: {ex.Message}");
             }
         }
     }

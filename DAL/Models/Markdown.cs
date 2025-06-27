@@ -31,29 +31,32 @@ namespace Hospital_BE.DAL.Models
         /// Nội dung ở định dạng HTML
         /// </summary>
         [Required]
-        public string ContentHTML { get; set; }
+        [Column(TypeName = "NVARCHAR(MAX)")]
+        public string ContentHTML { get; set; } = string.Empty;
 
         /// <summary>
         /// Nội dung ở định dạng Markdown
         /// </summary>
         [Required]
-        public string ContentMarkdown { get; set; }
+        [Column(TypeName = "NVARCHAR(MAX)")]
+        public string ContentMarkdown { get; set; } = string.Empty;
 
         /// <summary>
         /// Mô tả ngắn/excerpt của nội dung (nếu cần)
         /// </summary>
+        [Column(TypeName = "NVARCHAR(MAX)")]
         public string? Description { get; set; }
 
         /// <summary>
         /// Navigation: Tham chiếu đến User (bác sĩ)
         /// </summary>
         [ForeignKey(nameof(DoctorId))]
-        public virtual User Doctor { get; set; }
+        public virtual User? Doctor { get; set; }
 
         /// <summary>
         /// Navigation: Tham chiếu đến Clinic
         /// </summary>
         [ForeignKey(nameof(ClinicId))]
-        public virtual Clinic Clinic { get; set; }
+        public virtual Clinic? Clinic { get; set; }
     }
 }

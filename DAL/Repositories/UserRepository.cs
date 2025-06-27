@@ -71,5 +71,49 @@ namespace Hospital_BE.DAL.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<User> GetByUsernameAsync(string username)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Username == username);
+        }
+
+        public async Task<IEnumerable<User>> GetUsersByRoleAsync(string roleId, QueryParameters queryParams)
+        {
+            var query = _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.RoleId == roleId);
+
+            if (!string.IsNullOrEmpty(queryParams.Search))
+            {
+                query = query.Where(u => u.Name.Contains(queryParams.Search) || 
+                                        u.Email.Contains(queryParams.Search) ||
+                                        u.Username.Contains(queryParams.Search));
+            }
+
+            return await query
+                .OrderBy(u => u.Name)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> GetUsersByRoleWithoutDoctorInfoAsync(string roleId, QueryParameters queryParams)
+        {
+            var query = _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.RoleId == roleId)
+                .Where(u => !_context.DoctorInfos.Any(d => d.DoctorId == u.UserId)); // Chỉ lấy users chưa có DoctorInfo
+
+            if (!string.IsNullOrEmpty(queryParams.Search))
+            {
+                query = query.Where(u => u.Name.Contains(queryParams.Search) || 
+                                        u.Email.Contains(queryParams.Search) ||
+                                        u.Username.Contains(queryParams.Search));
+            }
+
+            return await query
+                .OrderBy(u => u.Name)
+                .ToListAsync();
+        }
     }
 } 

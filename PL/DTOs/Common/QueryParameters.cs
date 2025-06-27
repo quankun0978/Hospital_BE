@@ -19,5 +19,15 @@ namespace Hospital_BE.PL.DTOs.Common
         /// Hướng sắp xếp (asc, desc)
         /// </summary>
         public string? SortOrder { get; set; } = "desc";
+        
+        /// <summary>
+        /// Lọc theo Role ID
+        /// </summary>
+        public string? RoleId { get; set; }
+        
+        /// <summary>
+        /// Từ khóa tìm kiếm
+        /// </summary>
+        public string? Search { get; set; }
     }
 } 

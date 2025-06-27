@@ -55,9 +55,10 @@ namespace Hospital_BE.DAL.Repositories
             return doctorInfo;
         }
 
-        public async Task<bool> UpdateAsync(Guid id, DoctorInfo doctorInfo)
+        public async Task<bool> UpdateAsync(Guid doctorId, DoctorInfo doctorInfo)
         {
-            var existingDoctor = await _context.DoctorInfos.FindAsync(id);
+            var existingDoctor = await _context.DoctorInfos
+                .FirstOrDefaultAsync(d => d.DoctorId == doctorId);
             if (existingDoctor == null)
                 return false;
 
@@ -67,15 +68,17 @@ namespace Hospital_BE.DAL.Repositories
             existingDoctor.Note = doctorInfo.Note;
             existingDoctor.ImageUrl = doctorInfo.ImageUrl;
             existingDoctor.Slug = doctorInfo.Slug;
+            existingDoctor.Count = doctorInfo.Count;
 
             _context.DoctorInfos.Update(existingDoctor);
             var result = await _context.SaveChangesAsync();
             return result > 0;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid doctorId)
         {
-            var doctor = await _context.DoctorInfos.FindAsync(id);
+            var doctor = await _context.DoctorInfos
+                .FirstOrDefaultAsync(d => d.DoctorId == doctorId);
             if (doctor == null)
                 return false;
 

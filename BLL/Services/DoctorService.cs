@@ -60,6 +60,43 @@ namespace Hospital_BE.BLL.Services
             var doctorInfo = await _doctorRepository.GetByIdAsync(id);
             if (doctorInfo == null) return null;
             
+            // Lấy tất cả DoctorInfo của bác sĩ này
+            var allDoctorInfos = await _doctorRepository.GetAllDoctorInfosByDoctorIdAsync(doctorInfo.DoctorId);
+            
+            // Lấy danh sách specialties và clinics thông qua DoctorClinicSpecialty
+            var doctorClinicSpecialties = await _doctorRepository.GetDoctorClinicSpecialtiesByDoctorIdAsync(doctorInfo.DoctorId);
+
+            // Group specialties
+            var specialties = doctorClinicSpecialties
+                .Where(dcs => dcs.Specialty != null)
+                .GroupBy(dcs => dcs.SpecialtyId)
+                .Select(g => new DoctorSpecialtyDto
+                {
+                    SpecialtyId = g.Key,
+                    Name = g.First().Specialty.Name,
+                    ImageUrl = g.First().Specialty.ImageUrl,
+                    Description = g.First().Specialty.Description,
+                    Slug = g.First().Specialty.Slug
+                })
+                .ToList();
+
+            // Group clinics
+            var clinics = doctorClinicSpecialties
+                .Where(dcs => dcs.Clinic != null)
+                .GroupBy(dcs => dcs.ClinicId)
+                .Select(g => new DoctorClinicDto
+                {
+                    ClinicId = g.Key,
+                    Name = g.First().Clinic.Name,
+                    Address = g.First().Clinic.Address,
+                    Description = g.First().Clinic.Description,
+                    Slug = g.First().Clinic.Slug,
+                    ImageUrl = g.First().Clinic.ImageUrl,
+                    LogoImg = g.First().Clinic.LogoImg,
+                    IsHospital = g.First().Clinic.IsHospital
+                })
+                .ToList();
+            
             // Chuyển đổi entity sang DTO
             return new DoctorDto
             {
@@ -69,24 +106,23 @@ namespace Hospital_BE.BLL.Services
                 Email = doctorInfo.Doctor.Email,
                 RoleId = doctorInfo.Doctor.RoleId,
                 RoleName = doctorInfo.Doctor.Role?.ValueVi,
-                DoctorInfos = new List<DoctorInfoDto>
+                DoctorInfos = allDoctorInfos.Select(di => new DoctorInfoDto
                 {
-                    new DoctorInfoDto
-                    {
-                        Id = doctorInfo.Id,
-                        DoctorId = doctorInfo.DoctorId,
-                        PriceId = doctorInfo.PriceId,
-                        PriceName = doctorInfo.Price?.ValueVi,
-                        PositionId = doctorInfo.PositionId,
-                        PositionName = doctorInfo.Position?.ValueVi,
-                        ClinicId = doctorInfo.ClinicId,
-                        ClinicName = doctorInfo.Clinic?.Name,
-                        Slug = doctorInfo.Slug,
-                        Note = doctorInfo.Note,
-                        ImageUrl = doctorInfo.ImageUrl,
-                        Count = doctorInfo.Count
-                    }
-                }
+                    Id = di.Id,
+                    DoctorId = di.DoctorId,
+                    PriceId = di.PriceId,
+                    PriceName = di.Price?.ValueVi,
+                    PositionId = di.PositionId,
+                    PositionName = di.Position?.ValueVi,
+                    ClinicId = di.ClinicId,
+                    ClinicName = di.Clinic?.Name,
+                    Slug = di.Slug,
+                    Note = di.Note,
+                    ImageUrl = di.ImageUrl,
+                    Count = di.Count
+                }).ToList(),
+                Specialties = specialties,
+                Clinics = clinics
             };
         }
 

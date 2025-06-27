@@ -95,5 +95,8 @@ namespace Hospital_BE.BLL.Interfaces
         /// <param name="model">Thông tin đổi password</param>
         /// <returns>Kết quả đổi password</returns>
         Task<ServiceResult> ChangePasswordAsync(string userId, ChangePasswordDTO model);
+
+        Task<ServiceResult<IEnumerable<User>>> GetUsersByRoleAsync(string roleId, QueryParameters queryParams);
+        Task<ServiceResult<IEnumerable<User>>> GetUsersByRoleWithoutDoctorInfoAsync(string roleId, QueryParameters queryParams);
     }
 } 

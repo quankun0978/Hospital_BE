@@ -122,6 +122,22 @@ namespace Hospital_BE.DAL.Context
                 .HasForeignKey(m => m.ClinicId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Cấu hình UTF-8 cho Markdown
+            modelBuilder.Entity<Markdown>()
+                .Property(m => m.ContentHTML)
+                .HasColumnType("NVARCHAR(MAX)")
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Markdown>()
+                .Property(m => m.ContentMarkdown)
+                .HasColumnType("NVARCHAR(MAX)")
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Markdown>()
+                .Property(m => m.Description)
+                .HasColumnType("NVARCHAR(MAX)")
+                .IsUnicode(true);
+
             // Cấu hình bảng Specialty
             modelBuilder.Entity<Specialty>()
                 .HasKey(s => s.SpecialtyId);
@@ -220,6 +236,37 @@ namespace Hospital_BE.DAL.Context
             modelBuilder.Entity<Article>()
                 .HasKey(a => a.ArticleId);
 
+            // Cấu hình UTF-8 cho các trường text
+            modelBuilder.Entity<Article>()
+                .Property(a => a.Title)
+                .HasMaxLength(255)
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Article>()
+                .Property(a => a.Slug)
+                .HasMaxLength(500)
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Article>()
+                .Property(a => a.Description)
+                .HasColumnType("NVARCHAR(MAX)")
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Article>()
+                .Property(a => a.ContentHtml)
+                .HasColumnType("NVARCHAR(MAX)")
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Article>()
+                .Property(a => a.Content)
+                .HasColumnType("NVARCHAR(MAX)")
+                .IsUnicode(true);
+
+            modelBuilder.Entity<Article>()
+                .Property(a => a.Category)
+                .HasMaxLength(100)
+                .IsUnicode(true);
+
             // Quan hệ: Article - User (Author)
             modelBuilder.Entity<Article>()
                 .HasOne(a => a.Author)
@@ -235,6 +282,10 @@ namespace Hospital_BE.DAL.Context
 
             modelBuilder.Entity<Article>()
                 .HasIndex(a => a.PublishedAt);
+
+            modelBuilder.Entity<Article>()
+                .HasIndex(a => a.Category)
+                .HasFilter("[Category] IS NOT NULL");
 
             base.OnModelCreating(modelBuilder);
 

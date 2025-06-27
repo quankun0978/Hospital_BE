@@ -90,14 +90,77 @@ namespace Hospital_BE.PL.Controllers
             var userDto = new UserResponseDto
             {
                 UserId = Guid.Parse(user.UserId),
-                Username = user.Username,
-                Email = user.Email,
-                Name = user.Name,
-                RoleId = user.RoleId,
+                Username = user.Username ?? "",
+                Email = user.Email ?? "",
+                Name = user.Name ?? "",
+                RoleId = user.RoleId ?? "",
                 RoleName = user.RoleName ?? "Không xác định"
             };
 
             return ApiOk(userDto, "Lấy chi tiết người dùng thành công");
+        }
+
+        /// <summary>
+        /// Lấy danh sách người dùng theo role
+        /// </summary>
+        /// <param name="roleId">Role ID (ví dụ: R1, R2, R3)</param>
+        /// <returns>Danh sách người dùng theo role</returns>
+        [HttpGet("by-role/{roleId}")]
+        public async Task<IActionResult> GetUsersByRole(string roleId, [FromQuery] QueryParameters queryParams)
+        {
+            try
+            {
+                var result = await _userService.GetUsersByRoleAsync(roleId, queryParams);
+                
+                if (!result.Success)
+                    return ApiBadRequest<object>(result.Message);
+
+                // Convert to DTO to avoid circular reference
+                var userDtos = result.Data.Select(u => new UserResponseDto
+                {
+                    UserId = u.UserId,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Name = u.Name,
+                    RoleId = u.RoleId,
+                    RoleName = u.Role?.ValueVi ?? "Không xác định"
+                }).ToList();
+
+                return ApiOk(userDtos, $"Lấy danh sách người dùng role {roleId} thành công");
+            }
+            catch (Exception ex)
+            {
+                return ApiBadRequest<object>($"Lỗi khi lấy danh sách users: {ex.Message}");
+            }
+        }
+
+        [HttpGet("by-role/{roleId}/without-doctor-info")]
+        public async Task<IActionResult> GetUsersByRoleWithoutDoctorInfo(string roleId, [FromQuery] QueryParameters queryParams)
+        {
+            try
+            {
+                var result = await _userService.GetUsersByRoleWithoutDoctorInfoAsync(roleId, queryParams);
+                
+                if (!result.Success)
+                    return ApiBadRequest<object>(result.Message);
+
+                // Convert to DTO to avoid circular reference
+                var userDtos = result.Data.Select(u => new UserResponseDto
+                {
+                    UserId = u.UserId,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Name = u.Name,
+                    RoleId = u.RoleId,
+                    RoleName = u.Role?.ValueVi ?? "Không xác định"
+                }).ToList();
+
+                return ApiOk(userDtos, $"Lấy danh sách bác sĩ chưa có thông tin thành công");
+            }
+            catch (Exception ex)
+            {
+                return ApiBadRequest<object>($"Lỗi khi lấy danh sách users: {ex.Message}");
+            }
         }
 
         /// <summary>
