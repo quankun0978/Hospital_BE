@@ -58,6 +58,7 @@ builder.Services.AddSingleton<IOTPRepository, OTPRepository>();
 
 // Đăng ký services
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IClinicService, ClinicService>();
 builder.Services.AddScoped<IClinicImageService, ClinicImageService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
