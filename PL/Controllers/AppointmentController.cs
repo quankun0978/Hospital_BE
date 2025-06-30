@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hospital_BE.BLL.Services;
 using Hospital_BE.PL.Controllers.Base;
+using Hospital_BE.PL.DTOs;
 using Hospital_BE.PL.DTOs.Common;
 using Hospital_BE.PL.Middleware;
 using Microsoft.AspNetCore.Authorization;
@@ -213,6 +214,30 @@ namespace Hospital_BE.PL.Controllers
                 </html>";
 
             return Content(htmlContent, "text/html");
+        }
+
+        /// <summary>
+        /// Hoàn thành khám bệnh và gửi kết quả cho bệnh nhân
+        /// </summary>
+        [HttpPost("complete")]
+        public async Task<IActionResult> CompleteAppointment([FromBody] CompleteAppointmentDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiBadRequest<object>(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            }
+
+            var result = await _appointmentService.CompleteAppointmentAsync(model);
+            if (!result.Success)
+            {
+                if (result.Message.Contains("không tìm thấy"))
+                {
+                    return ApiNotFound<object>(result.Message);
+                }
+                return ApiBadRequest<object>(result.Message);
+            }
+
+            return ApiOk(new { success = true }, "Hoàn thành khám bệnh và gửi kết quả thành công");
         }
     }
 

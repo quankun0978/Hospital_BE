@@ -61,5 +61,7 @@ namespace Hospital_BE.DAL.Models
         /// Danh sách các Schedule sử dụng Allcode này làm TimeType
         /// </summary>
         public virtual ICollection<Schedule> ScheduleTimeTypes { get; set; }
+
+
     }
 } 

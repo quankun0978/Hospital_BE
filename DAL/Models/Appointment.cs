@@ -48,11 +48,11 @@ namespace Hospital_BE.DAL.Models
         public string? Reason { get; set; }
 
         /// <summary>
-        /// Trạng thái ('S'=Đã lên lịch, 'C'=Hoàn thành, 'N'=Hủy)
+        /// Trạng thái ('S1'=Lịch hẹn mới, 'S2'=Đã xác nhận, 'S3'=Đã khám xong, 'S4'=Đã hủy)
         /// </summary>
         [Required]
-        [StringLength(1)]
-        public string Status { get; set; } = "S";
+        [StringLength(2)]
+        public string Status { get; set; } = "S1";
 
         /// <summary>
         /// Thời gian tạo lịch hẹn
@@ -76,5 +76,7 @@ namespace Hospital_BE.DAL.Models
         /// </summary>
         [ForeignKey(nameof(DoctorId))]
         public virtual User Doctor { get; set; }
+
+
     }
 } 

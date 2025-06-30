@@ -5,6 +5,7 @@ using Hospital_BE.DAL.Models;
 using Hospital_BE.PL.Controllers.Base;
 using Hospital_BE.PL.DTOs;
 using Hospital_BE.PL.DTOs.Common;
+using System.IO;
 
 namespace Hospital_BE.PL.Controllers
 {
@@ -41,6 +42,7 @@ namespace Hospital_BE.PL.Controllers
                             Slug = a.Slug,
                             Description = a.Description,
                             Category = a.Category,
+                            ImageUrl = a.ImageUrl,
                             AuthorName = a.Author?.Name ?? "Ẩn danh",
                             PublishedAt = a.PublishedAt,
                             UpdatedAt = a.UpdatedAt
@@ -90,6 +92,7 @@ namespace Hospital_BE.PL.Controllers
                         Content = result.Data.Content,
                         ContentHtml = result.Data.ContentHtml,
                         Category = result.Data.Category,
+                        ImageUrl = result.Data.ImageUrl,
                         AuthorId = result.Data.AuthorId,
                         AuthorName = result.Data.Author?.Name ?? "Ẩn danh",
                         PublishedAt = result.Data.PublishedAt,
@@ -133,6 +136,7 @@ namespace Hospital_BE.PL.Controllers
                         Content = result.Data.Content,
                         ContentHtml = result.Data.ContentHtml,
                         Category = result.Data.Category,
+                        ImageUrl = result.Data.ImageUrl,
                         AuthorId = result.Data.AuthorId,
                         AuthorName = result.Data.Author?.Name ?? "Ẩn danh",
                         PublishedAt = result.Data.PublishedAt,
@@ -171,6 +175,7 @@ namespace Hospital_BE.PL.Controllers
                         Slug = a.Slug,
                         Description = a.Description,
                         Category = a.Category,
+                        ImageUrl = a.ImageUrl,
                         AuthorName = a.Author?.Name ?? "Ẩn danh",
                         PublishedAt = a.PublishedAt,
                         UpdatedAt = a.UpdatedAt
@@ -205,6 +210,7 @@ namespace Hospital_BE.PL.Controllers
                         Slug = a.Slug,
                         Description = a.Description,
                         Category = a.Category,
+                        ImageUrl = a.ImageUrl,
                         AuthorName = a.Author?.Name ?? "Ẩn danh",
                         PublishedAt = a.PublishedAt,
                         UpdatedAt = a.UpdatedAt
@@ -253,7 +259,8 @@ namespace Hospital_BE.PL.Controllers
                     Description = createDto.Description,
                     Content = createDto.Content,
                     ContentHtml = createDto.ContentHtml,
-                    Category = createDto.Category
+                    Category = createDto.Category,
+                    ImageUrl = createDto.ImageUrl
                 };
 
                 Console.WriteLine("=== BEFORE SERVICE CALL ===");
@@ -277,6 +284,7 @@ namespace Hospital_BE.PL.Controllers
                         Content = result.Data.Content,
                         ContentHtml = result.Data.ContentHtml,
                         Category = result.Data.Category,
+                        ImageUrl = result.Data.ImageUrl,
                         AuthorId = result.Data.AuthorId,
                         AuthorName = result.Data.Author?.Name ?? "Ẩn danh",
                         PublishedAt = result.Data.PublishedAt,
@@ -327,7 +335,8 @@ namespace Hospital_BE.PL.Controllers
                     Description = updateDto.Description,
                     Content = updateDto.Content,
                     ContentHtml = updateDto.ContentHtml,
-                    Category = updateDto.Category
+                    Category = updateDto.Category,
+                    ImageUrl = updateDto.ImageUrl
                 };
 
                 var result = await _articleService.UpdateArticleAsync(id, updateArticleDto, currentUserId);
@@ -347,6 +356,7 @@ namespace Hospital_BE.PL.Controllers
                         Content = result.Data.Content,
                         ContentHtml = result.Data.ContentHtml,
                         Category = result.Data.Category,
+                        ImageUrl = result.Data.ImageUrl,
                         AuthorId = result.Data.AuthorId,
                         AuthorName = result.Data.Author?.Name ?? "Ẩn danh",
                         PublishedAt = result.Data.PublishedAt,
@@ -411,6 +421,60 @@ namespace Hospital_BE.PL.Controllers
             catch (Exception ex)
             {
                 return ApiError($"Lỗi khi tạo slug: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Upload ảnh cho bài viết (chỉ Admin)
+        /// </summary>
+        [HttpPost("upload-image")]
+        [Authorize(Roles = "R1")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return ApiBadRequest("Vui lòng chọn file ảnh");
+                }
+
+                // Kiểm tra định dạng file
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return ApiBadRequest("Chỉ cho phép tải lên các file ảnh: " + string.Join(", ", allowedExtensions));
+                }
+
+                // Kiểm tra kích thước file (tối đa 5MB)
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    return ApiBadRequest("Kích thước file không được vượt quá 5MB");
+                }
+
+                // Tạo tên file duy nhất
+                var fileName = Guid.NewGuid().ToString() + fileExtension;
+                var uploadPath = Path.Combine("PL", "static", "image", "article");
+                var fullPath = Path.Combine(uploadPath, fileName);
+
+                // Tạo thư mục nếu chưa tồn tại
+                Directory.CreateDirectory(uploadPath);
+
+                // Lưu file
+                using (var stream = new FileStream(fullPath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Trả về đường dẫn tương đối
+                var relativePath = $"/static/image/article/{fileName}";
+                
+                return ApiOk(new { imageUrl = relativePath }, "Tải ảnh lên thành công");
+            }
+            catch (Exception ex)
+            {
+                return ApiError($"Lỗi khi tải ảnh lên: {ex.Message}");
             }
         }
 

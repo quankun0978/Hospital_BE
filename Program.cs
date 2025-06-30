@@ -72,6 +72,10 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IZipService, ZipService>();
+
+// Thêm Background Service để cleanup appointments
+builder.Services.AddHostedService<AppointmentCleanupService>();
 
 // Cấu hình JWT Authentication
 builder.Services.AddAuthentication(options =>

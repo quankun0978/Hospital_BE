@@ -6,6 +6,7 @@ using Hospital_BE.BLL.Models;
 using Hospital_BE.DAL.Context;
 using Hospital_BE.DAL.Models;
 using Hospital_BE.DAL.Repositories;
+using Hospital_BE.PL.DTOs;
 using Hospital_BE.PL.DTOs.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +29,30 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
+                // Debug logging
+                Console.WriteLine("=== CREATE APPOINTMENT DEBUG ===");
+                Console.WriteLine($"PatientId: {model.PatientId}");
+                Console.WriteLine($"DoctorId: {model.DoctorId}");
+                Console.WriteLine($"AppointmentDate: {model.AppointmentDate:yyyy-MM-dd}");
+                Console.WriteLine($"TimeType: '{model.TimeType}'");
+                Console.WriteLine($"Reason: '{model.Reason}'");
+                
+                // Kiểm tra patient tồn tại
+                var patientExists = await _context.PatientRecords.AnyAsync(p => p.PatientId == model.PatientId);
+                if (!patientExists)
+                {
+                    Console.WriteLine($"❌ Patient không tồn tại: {model.PatientId}");
+                    return ServiceResult<Guid>.Error("Bệnh nhân không tồn tại trong hệ thống.");
+                }
+                
+                // Kiểm tra doctor tồn tại
+                var doctorExists = await _context.Users.AnyAsync(u => u.UserId == model.DoctorId && u.RoleId == "R2");
+                if (!doctorExists)
+                {
+                    Console.WriteLine($"❌ Doctor không tồn tại: {model.DoctorId}");
+                    return ServiceResult<Guid>.Error("Bác sĩ không tồn tại trong hệ thống.");
+                }
+
                 // Kiểm tra khung giờ có trống không
                 bool isAvailable = await _appointmentRepository.IsTimeSlotAvailableAsync(
                     model.DoctorId, 
@@ -37,8 +62,11 @@ namespace Hospital_BE.BLL.Services
 
                 if (!isAvailable)
                 {
+                    Console.WriteLine("❌ Time slot không available");
                     return ServiceResult<Guid>.Error("Khung giờ này đã được đặt trước.");
                 }
+                
+                Console.WriteLine("✅ All validations passed, creating appointment...");
 
                 // Tạo lịch hẹn mới
                 var appointment = new Appointment
@@ -49,7 +77,7 @@ namespace Hospital_BE.BLL.Services
                     AppointmentDate = model.AppointmentDate,
                     TimeType = model.TimeType,
                     Reason = model.Reason,
-                    Status = "P", // Pending confirmation
+                    Status = "S1", // Lịch hẹn mới
                     CreatedAt = DateTime.Now
                 };
 
@@ -160,7 +188,7 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                if (!new[] { "P", "S", "S1", "C", "N" }.Contains(newStatus))
+                if (!new[] { "S1", "S2", "S3", "S4" }.Contains(newStatus))
                 {
                     return ServiceResult.Error("Trạng thái không hợp lệ.");
                 }
@@ -177,11 +205,10 @@ namespace Hospital_BE.BLL.Services
 
                 string statusText = newStatus switch
                 {
-                    "P" => "Chờ xác nhận",
-                    "S" => "Đã lên lịch",
-                    "S1" => "Đã xác nhận",
-                    "C" => "Hoàn thành",
-                    "N" => "Hủy",
+                    "S1" => "Lịch hẹn mới",
+                    "S2" => "Đã xác nhận",
+                    "S3" => "Đã khám xong",
+                    "S4" => "Đã hủy",
                     _ => "Không xác định"
                 };
 
@@ -195,11 +222,13 @@ namespace Hospital_BE.BLL.Services
 
         public async Task<ServiceResult> CancelAppointmentAsync(Guid appointmentId)
         {
-            return await UpdateAppointmentStatusAsync(appointmentId, "N");
-        }
-
-        public async Task<ServiceResult> ConfirmAppointmentAsync(Guid appointmentId)
-        {
+            try
+            {
+                // Sử dụng execution strategy để handle transaction với retry strategy
+                var strategy = _context.Database.CreateExecutionStrategy();
+                return await strategy.ExecuteAsync(async () =>
+                {
+                    using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
@@ -208,15 +237,82 @@ namespace Hospital_BE.BLL.Services
                     return ServiceResult.Error("Không tìm thấy lịch khám.");
                 }
 
-                if (appointment.Status != "P")
+                // Kiểm tra trạng thái có thể hủy
+                if (!new[] { "S1", "S2" }.Contains(appointment.Status))
+                {
+                    return ServiceResult.Error("Lịch khám này không thể hủy do trạng thái không phù hợp.");
+                }
+
+                // Kiểm tra thời gian (chỉ cho phép hủy trong vòng 10 phút)
+                var timeDiff = DateTime.Now - appointment.CreatedAt;
+                if (timeDiff.TotalMinutes > 10)
+                {
+                    return ServiceResult.Error("Không thể hủy lịch khám sau 10 phút kể từ lúc đặt lịch.");
+                }
+
+                        // Cập nhật status của appointment thành "S4" (Đã hủy)
+                        appointment.Status = "S4";
+                        appointment.UpdatedAt = DateTime.Now;
+                        _context.Appointments.Update(appointment);
+
+                        // Tìm và cập nhật IsActive của Schedule tương ứng về true (trả lại slot)
+                        var schedule = await _context.Schedules
+                            .FirstOrDefaultAsync(s => 
+                                s.DoctorId == appointment.DoctorId && 
+                                s.Date.Date == appointment.AppointmentDate.Date && 
+                                s.TimeType == appointment.TimeType);
+
+                        if (schedule != null)
+                        {
+                            schedule.IsActive = true; // Trả lại slot để có thể đặt lại
+                            _context.Schedules.Update(schedule);
+                        }
+
+                        // Lưu tất cả thay đổi trong một transaction
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        return ServiceResult.Ok("Hủy lịch khám thành công!");
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();
+                        throw; // Re-throw để execution strategy có thể handle retry
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Error($"Lỗi khi hủy lịch khám: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult> ConfirmAppointmentAsync(Guid appointmentId)
+        {
+            try
+            {
+                // Sử dụng execution strategy để handle transaction với retry strategy
+                var strategy = _context.Database.CreateExecutionStrategy();
+                return await strategy.ExecuteAsync(async () =>
+                {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
+                if (appointment == null)
+                {
+                    return ServiceResult.Error("Không tìm thấy lịch khám.");
+                }
+
+                if (appointment.Status != "S1")
                 {
                     return ServiceResult.Error("Lịch khám này đã được xác nhận trước đó hoặc đã bị hủy.");
                 }
 
-                // Cập nhật status của appointment thành "S1" (Scheduled/Confirmed)
-                appointment.Status = "S1";
+                // Cập nhật status của appointment thành "S2" (Đã xác nhận)
+                appointment.Status = "S2";
                 appointment.UpdatedAt = DateTime.Now;
-                await _appointmentRepository.UpdateAsync(appointment);
+                _context.Appointments.Update(appointment);
 
                 // Tìm và cập nhật IsActive của Schedule tương ứng về false
                 var schedule = await _context.Schedules
@@ -229,10 +325,20 @@ namespace Hospital_BE.BLL.Services
                 {
                     schedule.IsActive = false; // Đánh dấu slot này đã được đặt
                     _context.Schedules.Update(schedule);
-                    await _context.SaveChangesAsync();
                 }
 
+                // Lưu tất cả thay đổi trong một transaction
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
                 return ServiceResult.Ok("Xác nhận lịch khám thành công!");
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();
+                        throw; // Re-throw để execution strategy có thể handle retry
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -240,26 +346,135 @@ namespace Hospital_BE.BLL.Services
             }
         }
 
+        public async Task<ServiceResult> CompleteAppointmentAsync(Hospital_BE.PL.DTOs.CompleteAppointmentDTO model)
+        {
+            try
+            {
+                // Lấy thông tin lịch hẹn với đầy đủ thông tin patient và doctor
+                var appointment = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Doctor)
+                    .FirstOrDefaultAsync(a => a.AppointmentId == model.AppointmentId);
+                    
+                if (appointment == null)
+                {
+                    return ServiceResult.Error("Không tìm thấy lịch khám.");
+                }
+
+                // Kiểm tra trạng thái hiện tại
+                if (appointment.Status == "S3")
+                {
+                    return ServiceResult.Error("Lịch khám này đã hoàn thành trước đó.");
+                }
+
+                if (appointment.Status == "S4")
+                {
+                    return ServiceResult.Error("Không thể hoàn thành lịch khám đã bị hủy.");
+                }
+
+                // Cập nhật trạng thái thành hoàn thành
+                var previousStatus = appointment.Status;
+                appointment.Status = "S3";
+                appointment.UpdatedAt = DateTime.Now;
+                await _appointmentRepository.UpdateAsync(appointment);
+
+                // Chỉ gửi email nếu appointment chưa hoàn thành trước đó (tránh gửi duplicate)
+                if (previousStatus != "S3" && appointment.Patient?.Email != null)
+                {
+                    try
+                    {
+                        Console.WriteLine($"Gửi email kết quả khám cho: {appointment.Patient.Email}");
+                        
+                        // Lấy TimeType text từ Allcodes
+                        var timeTypeText = appointment.TimeType;
+                        if (!string.IsNullOrEmpty(appointment.TimeType))
+                        {
+                            var allcode = await _context.Allcodes
+                                .FirstOrDefaultAsync(a => a.CodeKey == appointment.TimeType && a.CodeType == "TIME");
+                            timeTypeText = allcode?.ValueVi ?? appointment.TimeType;
+                        }
+                        
+                        var emailResult = await _emailService.SendMedicalResultsAsync(
+                            appointment.Patient.Email,
+                            appointment.Patient.FullName,
+                            appointment.Doctor?.Name ?? "Bác sĩ",
+                            appointment.AppointmentDate,
+                            timeTypeText ?? "Chưa xác định",
+                            model.MedicalNotes,
+                            model.MedicalImages ?? new List<string>()
+                        );
+
+                        if (emailResult.Success)
+                        {
+                            Console.WriteLine("Email đã được gửi thành công!");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Lỗi gửi email: {emailResult.Message}");
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log lỗi email nhưng không fail transaction
+                        Console.WriteLine($"Exception khi gửi email kết quả khám: {emailEx.Message}");
+                    }
+                }
+
+                return ServiceResult.Ok("Hoàn thành khám bệnh và gửi kết quả thành công.");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Error($"Lỗi khi hoàn thành khám bệnh: {ex.Message}");
+            }
+        }
+
         private AppointmentDetailsDTO MapToAppointmentDetailsDTO(Appointment appointment)
         {
+            // Query TimeType text từ Allcodes
+            var timeTypeText = appointment.TimeType;
+            if (!string.IsNullOrEmpty(appointment.TimeType))
+            {
+                var allcode = _context.Allcodes
+                    .FirstOrDefault(a => a.CodeKey == appointment.TimeType && a.CodeType == "TIME");
+                timeTypeText = allcode?.ValueVi ?? appointment.TimeType;
+            }
+
             return new AppointmentDetailsDTO
             {
                 AppointmentId = appointment.AppointmentId,
                 PatientId = appointment.PatientId,
-                PatientName = appointment.Patient?.FullName,
+                Patient = appointment.Patient != null ? new PatientInfoDTO
+                {
+                    FullName = appointment.Patient.FullName,
+                    Phone = appointment.Patient.Phone,
+                    Email = appointment.Patient.Email,
+                    DateOfBirth = appointment.Patient.DateOfBirth,
+                    Gender = appointment.Patient.Gender,
+                    Address = appointment.Patient.Address,
+                    HealthInsuranceNumber = appointment.Patient.HealthInsuranceNumber,
+                    IdentityNumber = appointment.Patient.IdentityNumber,
+                    Ethnicity = appointment.Patient.Ethnicity,
+                    Occupation = appointment.Patient.Occupation,
+                    PatientCode = appointment.Patient.PatientCode
+                } : null,
                 DoctorId = appointment.DoctorId,
-                DoctorName = appointment.Doctor?.Name,
+                Doctor = appointment.Doctor != null ? new DoctorInfoDTO
+                {
+                    Name = appointment.Doctor.Name,
+                    Email = appointment.Doctor.Email,
+                    Phone = null // User model không có Phone
+                } : null,
                 AppointmentDate = appointment.AppointmentDate,
                 TimeType = appointment.TimeType,
+                TimeTypeText = timeTypeText,
                 Reason = appointment.Reason,
                 Status = appointment.Status,
                 StatusText = appointment.Status switch
                 {
-                    "P" => "Chờ xác nhận",
-                    "S" => "Đã lên lịch",
-                    "S1" => "Đã xác nhận",
-                    "C" => "Hoàn thành", 
-                    "N" => "Hủy",
+                    "S1" => "Lịch hẹn mới",
+                    "S2" => "Đã xác nhận",
+                    "S3" => "Đã khám xong", 
+                    "S4" => "Đã hủy",
                     _ => "Không xác định"
                 },
                 CreatedAt = appointment.CreatedAt,
@@ -268,29 +483,5 @@ namespace Hospital_BE.BLL.Services
         }
     }
 
-    // DTOs cho Appointment
-    public class CreateAppointmentDTO
-    {
-        public Guid PatientId { get; set; }
-        public Guid DoctorId { get; set; }
-        public DateTime AppointmentDate { get; set; }
-        public string? TimeType { get; set; }
-        public string? Reason { get; set; }
-    }
 
-    public class AppointmentDetailsDTO
-    {
-        public Guid AppointmentId { get; set; }
-        public Guid PatientId { get; set; }
-        public string? PatientName { get; set; }
-        public Guid DoctorId { get; set; }
-        public string? DoctorName { get; set; }
-        public DateTime AppointmentDate { get; set; }
-        public string? TimeType { get; set; }
-        public string? Reason { get; set; }
-        public string Status { get; set; }
-        public string StatusText { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-    }
 } 

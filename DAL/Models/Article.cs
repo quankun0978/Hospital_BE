@@ -28,6 +28,9 @@ namespace Hospital_BE.DAL.Models
         [MaxLength(100)]
         public string? Category { get; set; }
 
+        [MaxLength(255)]
+        public string? ImageUrl { get; set; }
+
         [Required]
         public Guid AuthorId { get; set; }
 

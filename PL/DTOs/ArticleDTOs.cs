@@ -19,6 +19,9 @@ namespace Hospital_BE.PL.DTOs
         [StringLength(100, ErrorMessage = "Danh mục không được vượt quá 100 ký tự")]
         public string? Category { get; set; }
 
+        [StringLength(255, ErrorMessage = "URL ảnh không được vượt quá 255 ký tự")]
+        public string? ImageUrl { get; set; }
+
         [Required(ErrorMessage = "Tác giả không được để trống")]
         public Guid AuthorId { get; set; }
     }
@@ -39,6 +42,9 @@ namespace Hospital_BE.PL.DTOs
 
         [StringLength(100, ErrorMessage = "Danh mục không được vượt quá 100 ký tự")]
         public string? Category { get; set; }
+
+        [StringLength(255, ErrorMessage = "URL ảnh không được vượt quá 255 ký tự")]
+        public string? ImageUrl { get; set; }
     }
 
     public class ArticleDto
@@ -50,6 +56,7 @@ namespace Hospital_BE.PL.DTOs
         public string? ContentHtml { get; set; }
         public string? Content { get; set; }
         public string? Category { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid AuthorId { get; set; }
         public string? AuthorName { get; set; }
         public DateTime PublishedAt { get; set; }
@@ -63,6 +70,7 @@ namespace Hospital_BE.PL.DTOs
         public string? Slug { get; set; }
         public string? Description { get; set; }
         public string? Category { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid AuthorId { get; set; }
         public string? AuthorName { get; set; }
         public DateTime PublishedAt { get; set; }

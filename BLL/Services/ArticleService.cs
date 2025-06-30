@@ -104,6 +104,7 @@ namespace Hospital_BE.BLL.Services
                     ContentHtml = createDto.ContentHtml,
                     Content = createDto.Content,
                     Category = createDto.Category,
+                    ImageUrl = createDto.ImageUrl,
                     AuthorId = authorId,
                     PublishedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
@@ -140,6 +141,7 @@ namespace Hospital_BE.BLL.Services
                 existingArticle.ContentHtml = updateDto.ContentHtml;
                 existingArticle.Content = updateDto.Content;
                 existingArticle.Category = updateDto.Category;
+                existingArticle.ImageUrl = updateDto.ImageUrl;
                 existingArticle.UpdatedAt = DateTime.Now;
 
                 // Tạo slug mới nếu title thay đổi

@@ -4,16 +4,20 @@ using Hospital_BE.DAL.Interfaces;
 using Hospital_BE.DAL.Models;
 using Hospital_BE.PL.DTOs;
 using Hospital_BE.PL.DTOs.Common;
+using Hospital_BE.DAL.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hospital_BE.BLL.Services
 {
     public class ScheduleService : IScheduleService
     {
         private readonly IScheduleRepository _scheduleRepository;
+        private readonly ApplicationDbContext _context;
 
-        public ScheduleService(IScheduleRepository scheduleRepository)
+        public ScheduleService(IScheduleRepository scheduleRepository, ApplicationDbContext context)
         {
             _scheduleRepository = scheduleRepository;
+            _context = context;
         }
 
         public async Task<ServiceResult<PaginatedResult<Schedule>>> GetSchedulesAsync(QueryParameters parameters)
@@ -156,16 +160,33 @@ namespace Hospital_BE.BLL.Services
             try
             {
                 var schedules = await _scheduleRepository.GetSchedulesByDoctorIdAsync(doctorId);
-                return schedules.Select(s => new ScheduleResponseDto
+                var scheduleList = schedules.ToList();
+                
+                // Kiểm tra appointments đã đặt cho từng schedule
+                var result = new List<ScheduleResponseDto>();
+                
+                foreach (var schedule in scheduleList)
                 {
-                    Id = s.Id,
-                    Date = s.Date,
-                    TimeType = s.TimeType,
-                    DoctorId = s.DoctorId,
-                    DoctorName = s.Doctor?.Name,
-                    TimeTypeText = s.TimeTypeAllcode?.ValueVi,
-                    IsActive = s.IsActive
+                    // Kiểm tra xem slot này đã có appointment chưa (loại trừ trạng thái hủy S4)
+                    var hasAppointment = await _context.Appointments
+                        .AnyAsync(a => a.DoctorId == schedule.DoctorId && 
+                                      a.AppointmentDate.Date == schedule.Date.Date && 
+                                      a.TimeType == schedule.TimeType &&
+                                      a.Status != "S4"); // Loại trừ lịch đã hủy
+                    
+                    result.Add(new ScheduleResponseDto
+                {
+                        Id = schedule.Id,
+                        Date = schedule.Date,
+                        TimeType = schedule.TimeType,
+                        DoctorId = schedule.DoctorId,
+                        DoctorName = schedule.Doctor?.Name,
+                        TimeTypeText = schedule.TimeTypeAllcode?.ValueVi,
+                        IsActive = schedule.IsActive && !hasAppointment // Disable nếu schedule inactive hoặc đã có appointment
                 });
+                }
+                
+                return result;
             }
             catch (Exception ex)
             {
@@ -191,16 +212,33 @@ namespace Hospital_BE.BLL.Services
                     schedules = schedules.Where(s => s.Date.Date == date.Value.Date);
                 }
                 
-                return schedules.Select(s => new ScheduleResponseDto
+                var scheduleList = schedules.ToList();
+                
+                // Kiểm tra appointments đã đặt cho từng schedule
+                var result = new List<ScheduleResponseDto>();
+                
+                foreach (var schedule in scheduleList)
                 {
-                    Id = s.Id,
-                    Date = s.Date,
-                    TimeType = s.TimeType,
-                    DoctorId = s.DoctorId,
-                    DoctorName = s.Doctor?.Name,
-                    TimeTypeText = s.TimeTypeAllcode?.ValueVi,
-                    IsActive = s.IsActive
+                    // Kiểm tra xem slot này đã có appointment chưa (loại trừ trạng thái hủy S4)
+                    var hasAppointment = await _context.Appointments
+                        .AnyAsync(a => a.DoctorId == schedule.DoctorId && 
+                                      a.AppointmentDate.Date == schedule.Date.Date && 
+                                      a.TimeType == schedule.TimeType &&
+                                      a.Status != "S4"); // Loại trừ lịch đã hủy
+                    
+                    result.Add(new ScheduleResponseDto
+                {
+                        Id = schedule.Id,
+                        Date = schedule.Date,
+                        TimeType = schedule.TimeType,
+                        DoctorId = schedule.DoctorId,
+                        DoctorName = schedule.Doctor?.Name,
+                        TimeTypeText = schedule.TimeTypeAllcode?.ValueVi,
+                        IsActive = schedule.IsActive && !hasAppointment // Disable nếu schedule inactive hoặc đã có appointment
                 });
+                }
+                
+                return result;
             }
             catch (Exception ex)
             {

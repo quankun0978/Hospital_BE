@@ -103,7 +103,7 @@ namespace Hospital_BE.DAL.Repositories
                 .AnyAsync(a => a.DoctorId == doctorId && 
                               a.AppointmentDate.Date == appointmentDate.Date && 
                               a.TimeType == timeType && 
-                              a.Status != "N"); // Không tính những lịch đã hủy
+                              a.Status != "S4"); // Không tính những lịch đã hủy
         }
 
         public async Task SaveChangesAsync()
