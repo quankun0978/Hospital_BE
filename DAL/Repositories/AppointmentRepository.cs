@@ -28,8 +28,10 @@ namespace Hospital_BE.DAL.Repositories
         public async Task<Appointment> GetByIdAsync(Guid appointmentId)
         {
             return await _context.Appointments
-                .Include(a => a.Patient)
+                .Include(a => a.Patient).ThenInclude(a=>a.User)
                 .Include(a => a.Doctor)
+                    .ThenInclude(d => d.DoctorInfos)
+                        .ThenInclude(di => di.Position) // Include thông tin chức vụ
                 .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
         }
 
@@ -38,8 +40,36 @@ namespace Hospital_BE.DAL.Repositories
             var query = _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Doctor)
-                .OrderByDescending(a => a.CreatedAt)
+                    .ThenInclude(d => d.DoctorInfos)
+                        .ThenInclude(di => di.Position) // Include thông tin chức vụ
                 .AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                var searchTerm = parameters.SearchTerm.ToLower();
+                query = query.Where(a => 
+                    (a.Patient.FullName != null && a.Patient.FullName.ToLower().Contains(searchTerm)) ||
+                    (a.Doctor.Name != null && a.Doctor.Name.ToLower().Contains(searchTerm)) ||
+                    (a.Reason != null && a.Reason.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Apply status filter  
+            if (!string.IsNullOrWhiteSpace(parameters.Status))
+            {
+                query = query.Where(a => a.Status == parameters.Status);
+            }
+
+            // Apply appointment date filter
+            if (parameters.AppointmentDate.HasValue)
+            {
+                var filterDate = parameters.AppointmentDate.Value.Date;
+                query = query.Where(a => a.AppointmentDate.Date == filterDate);
+            }
+
+            // Default ordering
+            query = query.OrderByDescending(a => a.CreatedAt);
 
             var totalCount = await query.CountAsync();
             var items = await query
@@ -54,6 +84,8 @@ namespace Hospital_BE.DAL.Repositories
         {
             return await _context.Appointments
                 .Include(a => a.Doctor)
+                    .ThenInclude(d => d.DoctorInfos)
+                        .ThenInclude(di => di.Position) // Include thông tin chức vụ
                 .Where(a => a.PatientId == patientId)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
@@ -63,17 +95,68 @@ namespace Hospital_BE.DAL.Repositories
         {
             return await _context.Appointments
                 .Include(a => a.Patient)
-                .Where(a => a.DoctorId == doctorId)
+                .Include(a => a.Doctor)
+                    .ThenInclude(d => d.DoctorInfos)
+                        .ThenInclude(di => di.Position) // Include thông tin chức vụ
+                .Where(a => a.DoctorId == doctorId && a.AppointmentDate.Date <= DateTime.Today) // Chỉ lấy lịch hẹn <= hôm nay
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
+        }
+
+        public async Task<(List<Appointment> Items, int TotalCount)> GetByDoctorIdWithFiltersAsync(Guid doctorId, QueryParameters parameters)
+        {
+            var query = _context.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Doctor)
+                    .ThenInclude(d => d.DoctorInfos)
+                        .ThenInclude(di => di.Position) // Include thông tin chức vụ
+                .Where(a => a.DoctorId == doctorId)
+                .AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                var searchTerm = parameters.SearchTerm.ToLower();
+                query = query.Where(a => 
+                    (a.Patient.FullName != null && a.Patient.FullName.ToLower().Contains(searchTerm)) ||
+                    (a.Doctor.Name != null && a.Doctor.Name.ToLower().Contains(searchTerm)) ||
+                    (a.Reason != null && a.Reason.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Apply status filter  
+            if (!string.IsNullOrWhiteSpace(parameters.Status))
+            {
+                query = query.Where(a => a.Status == parameters.Status);
+            }
+
+            // Apply appointment date filter
+            if (parameters.AppointmentDate.HasValue)
+            {
+                var filterDate = parameters.AppointmentDate.Value.Date;
+                query = query.Where(a => a.AppointmentDate.Date == filterDate);
+            }
+
+            // Default ordering
+            query = query.OrderByDescending(a => a.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+                .Take(parameters.PageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
         }
 
         public async Task<List<Appointment>> GetByUserIdAsync(Guid userId)
         {
             return await _context.Appointments
-                .Include(a => a.Patient)
+                .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Include(a => a.Doctor)
-                .Where(a => a.Patient.UserId == userId)
+                    .ThenInclude(d => d.DoctorInfos)
+                        .ThenInclude(di => di.Position) // Include thông tin chức vụ
+                .Where(a => a.DoctorId == userId || a.Patient.UserId == userId)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
         }

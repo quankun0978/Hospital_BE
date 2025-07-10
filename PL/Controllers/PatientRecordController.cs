@@ -44,7 +44,6 @@ namespace Hospital_BE.PL.Controllers
                 Address = dto.Address,
                 Phone = dto.Phone,
                 Email = dto.Email,
-                HealthInsuranceNumber = dto.HealthInsuranceNumber,
                 UserId = dto.UserId,
                 CreatedAt = DateTime.Now,
                 IsActive = true
@@ -67,7 +66,6 @@ namespace Hospital_BE.PL.Controllers
             record.Gender = dto.Gender;
             record.Address = dto.Address;
             record.Email = dto.Email;
-            record.HealthInsuranceNumber = dto.HealthInsuranceNumber;
             record.UserId = dto.UserId;
             record.UpdatedAt = DateTime.Now;
             _context.SaveChanges();

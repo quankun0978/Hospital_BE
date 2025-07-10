@@ -29,19 +29,11 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                // Debug logging
-                Console.WriteLine("=== CREATE APPOINTMENT DEBUG ===");
-                Console.WriteLine($"PatientId: {model.PatientId}");
-                Console.WriteLine($"DoctorId: {model.DoctorId}");
-                Console.WriteLine($"AppointmentDate: {model.AppointmentDate:yyyy-MM-dd}");
-                Console.WriteLine($"TimeType: '{model.TimeType}'");
-                Console.WriteLine($"Reason: '{model.Reason}'");
                 
                 // Kiểm tra patient tồn tại
                 var patientExists = await _context.PatientRecords.AnyAsync(p => p.PatientId == model.PatientId);
                 if (!patientExists)
                 {
-                    Console.WriteLine($"❌ Patient không tồn tại: {model.PatientId}");
                     return ServiceResult<Guid>.Error("Bệnh nhân không tồn tại trong hệ thống.");
                 }
                 
@@ -49,7 +41,6 @@ namespace Hospital_BE.BLL.Services
                 var doctorExists = await _context.Users.AnyAsync(u => u.UserId == model.DoctorId && u.RoleId == "R2");
                 if (!doctorExists)
                 {
-                    Console.WriteLine($"❌ Doctor không tồn tại: {model.DoctorId}");
                     return ServiceResult<Guid>.Error("Bác sĩ không tồn tại trong hệ thống.");
                 }
 
@@ -62,7 +53,6 @@ namespace Hospital_BE.BLL.Services
 
                 if (!isAvailable)
                 {
-                    Console.WriteLine("❌ Time slot không available");
                     return ServiceResult<Guid>.Error("Khung giờ này đã được đặt trước.");
                 }
                 
@@ -88,10 +78,10 @@ namespace Hospital_BE.BLL.Services
                 {
                     // Lấy thông tin chi tiết để gửi email
                     var appointmentWithDetails = await _appointmentRepository.GetByIdAsync(createdAppointment.AppointmentId);
-                    if (appointmentWithDetails?.Patient?.Email != null)
+                    if (appointmentWithDetails?.Patient?.User?.Email != null)
                     {
                         await _emailService.SendAppointmentConfirmationAsync(
-                            appointmentWithDetails.Patient.Email,
+                            appointmentWithDetails.Patient.User.Email,
                             appointmentWithDetails.Patient.FullName ,
                             appointmentWithDetails.Doctor?.Name ?? "Bác sĩ",
                             appointmentWithDetails.AppointmentDate,
@@ -167,6 +157,21 @@ namespace Hospital_BE.BLL.Services
             catch (Exception ex)
             {
                 return ServiceResult<List<AppointmentDetailsDTO>>.Error($"Lỗi khi lấy danh sách lịch khám: {ex.Message}");
+            }
+        }
+
+        public async Task<PaginatedResult<AppointmentDetailsDTO>> GetAppointmentsByDoctorIdAsync(Guid doctorId, QueryParameters parameters)
+        {
+            try
+            {
+                var (items, totalCount) = await _appointmentRepository.GetByDoctorIdWithFiltersAsync(doctorId, parameters);
+                var mappedItems = items.Select(MapToAppointmentDetailsDTO).ToList();
+                return new PaginatedResult<AppointmentDetailsDTO>(mappedItems, totalCount, parameters.PageNumber, parameters.PageSize);
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                throw new Exception($"Lỗi khi lấy danh sách lịch khám: {ex.Message}");
             }
         }
 
@@ -352,7 +357,7 @@ namespace Hospital_BE.BLL.Services
             {
                 // Lấy thông tin lịch hẹn với đầy đủ thông tin patient và doctor
                 var appointment = await _context.Appointments
-                    .Include(a => a.Patient)
+                    .Include(a => a.Patient).ThenInclude(p => p.User)
                     .Include(a => a.Doctor)
                     .FirstOrDefaultAsync(a => a.AppointmentId == model.AppointmentId);
                     
@@ -379,11 +384,11 @@ namespace Hospital_BE.BLL.Services
                 await _appointmentRepository.UpdateAsync(appointment);
 
                 // Chỉ gửi email nếu appointment chưa hoàn thành trước đó (tránh gửi duplicate)
-                if (previousStatus != "S3" && appointment.Patient?.Email != null)
+                if (previousStatus != "S3" && appointment.Patient?.User?.Email != null)
                 {
                     try
                     {
-                        Console.WriteLine($"Gửi email kết quả khám cho: {appointment.Patient.Email}");
+                        Console.WriteLine($"Gửi email kết quả khám cho: {appointment.Patient.User.Email}");
                         
                         // Lấy TimeType text từ Allcodes
                         var timeTypeText = appointment.TimeType;
@@ -395,7 +400,7 @@ namespace Hospital_BE.BLL.Services
                         }
                         
                         var emailResult = await _emailService.SendMedicalResultsAsync(
-                            appointment.Patient.Email,
+                            appointment.Patient.User.Email,
                             appointment.Patient.FullName,
                             appointment.Doctor?.Name ?? "Bác sĩ",
                             appointment.AppointmentDate,
@@ -451,18 +456,15 @@ namespace Hospital_BE.BLL.Services
                     DateOfBirth = appointment.Patient.DateOfBirth,
                     Gender = appointment.Patient.Gender,
                     Address = appointment.Patient.Address,
-                    HealthInsuranceNumber = appointment.Patient.HealthInsuranceNumber,
-                    IdentityNumber = appointment.Patient.IdentityNumber,
-                    Ethnicity = appointment.Patient.Ethnicity,
-                    Occupation = appointment.Patient.Occupation,
-                    PatientCode = appointment.Patient.PatientCode
                 } : null,
                 DoctorId = appointment.DoctorId,
                 Doctor = appointment.Doctor != null ? new DoctorInfoDTO
                 {
                     Name = appointment.Doctor.Name,
                     Email = appointment.Doctor.Email,
-                    Phone = null // User model không có Phone
+                    Phone = null, // DoctorInfo không có Phone
+                    SpecialtyName = null, // Sẽ lấy từ DoctorClinicSpecialty nếu cần
+                    PositionName = appointment.Doctor.DoctorInfos?.FirstOrDefault()?.Position?.ValueVi
                 } : null,
                 AppointmentDate = appointment.AppointmentDate,
                 TimeType = appointment.TimeType,

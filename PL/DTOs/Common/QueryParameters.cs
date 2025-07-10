@@ -29,5 +29,20 @@ namespace Hospital_BE.PL.DTOs.Common
         /// Từ khóa tìm kiếm
         /// </summary>
         public string? Search { get; set; }
+        
+        /// <summary>
+        /// Lọc theo Clinic ID
+        /// </summary>
+        public Guid? ClinicId { get; set; }
+        
+        /// <summary>
+        /// Lọc theo trạng thái (S1, S2, S3, S4)
+        /// </summary>
+        public string? Status { get; set; }
+        
+        /// <summary>
+        /// Lọc theo ngày hẹn
+        /// </summary>
+        public DateTime? AppointmentDate { get; set; }
     }
 } 

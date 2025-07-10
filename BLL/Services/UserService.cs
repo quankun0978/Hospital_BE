@@ -195,10 +195,75 @@ namespace Hospital_BE.BLL.Services
                 return ServiceResult.Error("Không tìm thấy người dùng.");
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Xóa tất cả dependencies trước khi xóa user
+                
+                // Xóa PatientRecords của user
+                var patientRecords = await _context.PatientRecords
+                    .Where(pr => pr.UserId == userId)
+                    .ToListAsync();
+                
+                if (patientRecords.Any())
+                {
+                    _context.PatientRecords.RemoveRange(patientRecords);
+                    Console.WriteLine($"Đã xóa {patientRecords.Count} hồ sơ bệnh nhân");
+                }
+                
+                // Xóa DoctorInfos của user
+                var doctorInfos = await _context.DoctorInfos
+                    .Where(di => di.DoctorId == userId)
+                    .ToListAsync();
+                
+                if (doctorInfos.Any())
+                {
+                    _context.DoctorInfos.RemoveRange(doctorInfos);
+                    Console.WriteLine($"Đã xóa {doctorInfos.Count} thông tin bác sĩ");
+                }
+                
+                // Xóa Appointments liên quan đến user (là doctor)
+                var appointments = await _context.Appointments
+                    .Where(a => a.DoctorId == userId)
+                    .ToListAsync();
+                
+                if (appointments.Any())
+                {
+                    _context.Appointments.RemoveRange(appointments);
+                    Console.WriteLine($"Đã xóa {appointments.Count} lịch hẹn");
+                }
 
-            return ServiceResult.Ok("Xóa người dùng thành công.");
+                // Xóa DoctorSpecialties nếu user là bác sĩ
+                var doctorSpecialties = await _context.DoctorClinicSpecialties
+                    .Where(ds => ds.DoctorId == userId)
+                    .ToListAsync();
+                
+                if (doctorSpecialties.Any())
+                {
+                    _context.DoctorClinicSpecialties.RemoveRange(doctorSpecialties);
+                    Console.WriteLine($"Đã xóa {doctorSpecialties.Count} chuyên khoa bác sĩ");
+                }
+
+                // Xóa Markdowns nếu user là bác sĩ
+                var markdowns = await _context.Markdowns
+                    .Where(m => m.DoctorId == userId)
+                    .ToListAsync();
+                
+                if (markdowns.Any())
+                {
+                    _context.Markdowns.RemoveRange(markdowns);
+                    Console.WriteLine($"Đã xóa {markdowns.Count} nội dung markdown");
+                }
+
+                // Cuối cùng xóa user
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                return ServiceResult.Ok("Xóa người dùng và tất cả dữ liệu liên quan thành công.");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Error($"Lỗi khi xóa người dùng: {ex.Message}");
+            }
         }
 
         public async Task<ServiceResult<bool>> CheckUserExistsAsync(Guid userId, string roleId)

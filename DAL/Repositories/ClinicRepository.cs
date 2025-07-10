@@ -81,7 +81,7 @@ namespace Hospital_BE.DAL.Repositories
                 .Include(c => c.Doctors)
                     .ThenInclude(d => d.Price)
                 .Include(c => c.ClinicImages)
-                .FirstOrDefaultAsync(c => c.Slug.StartsWith(slug) && c.Slug.EndsWith(slug) && c.Slug.Length == slug.Length);
+                .FirstOrDefaultAsync(c => c.Slug == slug);
 
             if (clinic == null) return null;
 

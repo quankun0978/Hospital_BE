@@ -150,7 +150,6 @@ namespace Hospital_BE.BLL.Services
                     Address = !string.IsNullOrEmpty(model.Address) ? model.Address : null,
                     Phone = !string.IsNullOrEmpty(model.Phone) ? model.Phone : null,
                     Email = !string.IsNullOrEmpty(model.Email) ? model.Email : null,
-                    HealthInsuranceNumber = !string.IsNullOrEmpty(model.HealthInsuranceNumber) ? model.HealthInsuranceNumber : null,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     IsActive = true
@@ -408,7 +407,7 @@ namespace Hospital_BE.BLL.Services
         </div>
         
         <div class='footer'>
-            <p>© 2024 Hệ thống Bệnh viện. Mọi quyền được bảo lưu.</p>
+            <p>© 2025 Hệ thống Bệnh viện. Mọi quyền được bảo lưu.</p>
         </div>
     </div>
 </body>

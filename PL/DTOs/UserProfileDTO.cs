@@ -23,7 +23,5 @@ namespace Hospital_BE.PL.DTOs
 
         [Required(ErrorMessage = "Giới tính là bắt buộc.")]
         public string Gender { get; set; }
-
-        public string HealthInsuranceNumber { get; set; }
     }
 } 

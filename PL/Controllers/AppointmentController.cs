@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Hospital_BE.BLL.Services;
 using Hospital_BE.PL.Controllers.Base;
@@ -59,11 +60,24 @@ namespace Hospital_BE.PL.Controllers
         /// Lấy danh sách lịch hẹn có phân trang
         /// </summary>
         [HttpGet]
+        [Middleware.Authorize]
         public async Task<IActionResult> GetAppointments([FromQuery] QueryParameters parameters)
         {
-            var result = await _appointmentService.GetAppointmentsAsync(parameters);
-            AddPaginationHeader(result);
-            return ApiOk(result.Data, "Lấy danh sách lịch khám thành công");
+            var currentUserId = GetCurrentUserId();
+            var currentUserRole = GetCurrentUserRole();
+            
+            // Nếu là bác sĩ (R2), chỉ lấy lịch hẹn của bác sĩ đó với filter và search
+            if (currentUserRole == "R2")
+            {
+                var result = await _appointmentService.GetAppointmentsByDoctorIdAsync(currentUserId, parameters);
+                AddPaginationHeader(result);
+                return ApiOk(result.Data, "Lấy danh sách lịch khám thành công");
+            }
+            
+            // Admin (R1) có thể xem tất cả lịch hẹn
+            var allResult = await _appointmentService.GetAppointmentsAsync(parameters);
+            AddPaginationHeader(allResult);
+            return ApiOk(allResult.Data, "Lấy danh sách lịch khám thành công");
         }
 
         /// <summary>
@@ -238,6 +252,17 @@ namespace Hospital_BE.PL.Controllers
             }
 
             return ApiOk(new { success = true }, "Hoàn thành khám bệnh và gửi kết quả thành công");
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.Parse(userIdClaim ?? throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng"));
+        }
+
+        private string GetCurrentUserRole()
+        {
+            return User.FindFirst(ClaimTypes.Role)?.Value ?? throw new UnauthorizedAccessException("Không tìm thấy thông tin vai trò");
         }
     }
 

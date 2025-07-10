@@ -66,7 +66,7 @@ namespace Hospital_BE.PL.Controllers
         [HttpGet("doctor")]
         public async Task<IActionResult> GetSchedulesByDoctor([FromQuery] QueryParameters parameters, [FromQuery] Guid? doctorId = null)
         {
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = GetCurrentUserIdAsGuid();
             var currentUserRole = GetCurrentUserRole();
 
             Guid targetDoctorId;
@@ -131,7 +131,7 @@ namespace Hospital_BE.PL.Controllers
                 return ApiBadRequest(result.Message);
             }
 
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = GetCurrentUserIdAsGuid();
             var currentUserRole = GetCurrentUserRole();
 
             // Kiểm tra quyền truy cập
@@ -161,7 +161,7 @@ namespace Hospital_BE.PL.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateSchedule([FromBody] CreateScheduleDto dto)
         {
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = GetCurrentUserIdAsGuid();
             var currentUserRole = GetCurrentUserRole();
 
             // Bác sĩ chỉ có thể tạo lịch cho chính mình
@@ -203,7 +203,7 @@ namespace Hospital_BE.PL.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSchedule(int id, [FromBody] UpdateScheduleDto dto)
         {
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = GetCurrentUserIdAsGuid();
             var currentUserRole = GetCurrentUserRole();
 
             // Kiểm tra lịch khám tồn tại và quyền truy cập
@@ -256,7 +256,7 @@ namespace Hospital_BE.PL.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSchedule(int id)
         {
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = GetCurrentUserIdAsGuid();
             var currentUserRole = GetCurrentUserRole();
 
             // Kiểm tra lịch khám tồn tại và quyền truy cập
@@ -310,7 +310,7 @@ namespace Hospital_BE.PL.Controllers
         [HttpGet("date-range")]
         public async Task<IActionResult> GetSchedulesByDateRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] Guid? doctorId = null)
         {
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = GetCurrentUserIdAsGuid();
             var currentUserRole = GetCurrentUserRole();
 
             Guid targetDoctorId;
@@ -409,15 +409,6 @@ namespace Hospital_BE.PL.Controllers
             }
         }
 
-        private Guid GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.Parse(userIdClaim ?? throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng"));
-        }
-
-        private string GetCurrentUserRole()
-        {
-            return User.FindFirst(ClaimTypes.Role)?.Value ?? throw new UnauthorizedAccessException("Không tìm thấy thông tin vai trò");
-        }
+        // Methods GetCurrentUserId và GetCurrentUserRole đã được kế thừa từ BaseController
     }
 } 

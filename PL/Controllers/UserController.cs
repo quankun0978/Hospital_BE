@@ -223,7 +223,7 @@ namespace Hospital_BE.PL.Controllers
                 return ApiBadRequest<object>(result.Message);
             }
 
-            return ApiNoContent();
+            return ApiOk(new { success = true }, "Xóa người dùng thành công");
         }
 
         /// <summary>

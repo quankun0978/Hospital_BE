@@ -61,35 +61,6 @@ namespace Hospital_BE.DAL.Models
         [StringLength(255)]
         public string? Email { get; set; }
 
-        /// <summary>
-        /// Số bảo hiểm y tế (nếu có)
-        /// </summary>
-        [StringLength(20)]
-        public string? HealthInsuranceNumber { get; set; }
-
-        /// <summary>
-        /// Số CMND/CCCD
-        /// </summary>
-        [StringLength(20)]
-        public string? IdentityNumber { get; set; }
-
-        /// <summary>
-        /// Dân tộc
-        /// </summary>
-        [StringLength(50)]
-        public string? Ethnicity { get; set; }
-
-        /// <summary>
-        /// Nghề nghiệp
-        /// </summary>
-        [StringLength(100)]
-        public string? Occupation { get; set; }
-
-        /// <summary>
-        /// Mã bệnh nhân
-        /// </summary>
-        [StringLength(20)]
-        public string? PatientCode { get; set; }
 
         /// <summary>
         /// Thời gian tạo bản ghi

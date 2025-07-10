@@ -46,9 +46,6 @@ namespace Hospital_BE.PL.DTOs
 
         [StringLength(15, ErrorMessage = "Số điện thoại tối đa 15 ký tự")]
         public string Phone { get; set; }
-
-        [StringLength(20, ErrorMessage = "Số bảo hiểm y tế tối đa 20 ký tự")]
-        public string HealthInsuranceNumber { get; set; }
     }
 
     /// <summary>

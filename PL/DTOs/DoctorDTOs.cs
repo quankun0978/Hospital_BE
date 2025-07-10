@@ -24,12 +24,7 @@ namespace Hospital_BE.PL.DTOs
         public string Username { get; set; }
 
         /// <summary>
-        /// Số điện thoại
-        /// </summary>
-        public string Phone { get; set; }
-
-        /// <summary>
-        /// Số điện thoại
+        /// Email
         /// </summary>
         public string Email { get; set; }
 

@@ -224,7 +224,7 @@ namespace Hospital_BE.BLL.Services
         </div>
         
         <div class='footer'>
-            <p>© 2024 Hệ thống Bệnh viện. Mọi quyền được bảo lưu.</p>
+            <p>© 2025 Hệ thống Bệnh viện. Mọi quyền được bảo lưu.</p>
             <p>Email này được gửi tự động, vui lòng không trả lời trực tiếp.</p>
         </div>
     </div>
@@ -414,7 +414,7 @@ namespace Hospital_BE.BLL.Services
         </div>
         
         <div class='footer'>
-            <p>© 2024 Hệ thống Bệnh viện. Mọi quyền được bảo lưu.</p>
+            <p>© 2025 Hệ thống Bệnh viện. Mọi quyền được bảo lưu.</p>
             <p>Email này được gửi tự động, vui lòng không trả lời trực tiếp.</p>
         </div>
     </div>

@@ -26,8 +26,23 @@ namespace Hospital_BE.DAL.Repositories
                 .Include(d => d.Position)
                 .Include(d => d.Price)
                 .Include(d => d.Clinic)
-                .OrderBy(d => d.Doctor.Name)
                 .AsQueryable();
+
+            // Filter by ClinicId if provided
+            if (parameters.ClinicId.HasValue)
+            {
+                query = query.Where(d => d.ClinicId == parameters.ClinicId.Value);
+            }
+
+            // Filter by search term if provided
+            if (!string.IsNullOrEmpty(parameters.Search) || !string.IsNullOrEmpty(parameters.SearchTerm))
+            {
+                var searchTerm = parameters.Search ?? parameters.SearchTerm;
+                query = query.Where(d => d.Doctor.Name.Contains(searchTerm) || 
+                                        (d.Note != null && d.Note.Contains(searchTerm)));
+            }
+
+            query = query.OrderBy(d => d.Doctor.Name);
 
             var totalCount = await query.CountAsync();
             var items = await query

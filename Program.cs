@@ -54,6 +54,7 @@ builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<AppointmentRepository>();
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 builder.Services.AddScoped<IMarkdownRepository, MarkdownRepository>();
+builder.Services.AddScoped<IStatisticsRepository, StatisticsRepository>();
 builder.Services.AddSingleton<IOTPRepository, OTPRepository>();
 
 // Đăng ký services
@@ -69,10 +70,13 @@ builder.Services.AddScoped<ISpecialtyService, SpecialtyService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<AppointmentService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IZipService, ZipService>();
+
+builder.Services.AddMemoryCache();
 
 // Thêm Background Service để cleanup appointments
 builder.Services.AddHostedService<AppointmentCleanupService>();

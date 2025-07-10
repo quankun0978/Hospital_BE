@@ -122,13 +122,12 @@ namespace Hospital_BE.BLL.Services
         {
             try
             {
-                var schedule = await _scheduleRepository.GetScheduleByIdAsync(id);
-                if (schedule == null)
+                var result = await _scheduleRepository.DeleteScheduleAsync(id);
+                if (!result)
                 {
-                    return ServiceResult<bool>.Error("Không tìm thấy lịch khám");
+                    return ServiceResult<bool>.Error("Không tìm thấy lịch khám hoặc lịch khám đã bị xóa");
                 }
                 
-                var result = await _scheduleRepository.DeleteScheduleAsync(id);
                 return ServiceResult<bool>.Ok("Xóa lịch khám thành công", result);
             }
             catch (Exception ex)

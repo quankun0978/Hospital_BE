@@ -14,10 +14,12 @@ namespace Hospital_BE.PL.Controllers
     public class ArticleController : BaseController
     {
         private readonly IArticleService _articleService;
+        private readonly IImageService _imageService;
 
-        public ArticleController(IArticleService articleService)
+        public ArticleController(IArticleService articleService, IImageService imageService)
         {
             _articleService = articleService;
+            _imageService = imageService;
         }
 
         /// <summary>
@@ -429,52 +431,22 @@ namespace Hospital_BE.PL.Controllers
         /// </summary>
         [HttpPost("upload-image")]
         [Authorize(Roles = "R1")]
-        public async Task<IActionResult> UploadImage(IFormFile file)
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromQuery] string folder = "articles")
         {
             try
             {
                 if (file == null || file.Length == 0)
-                {
-                    return ApiBadRequest("Vui lòng chọn file ảnh");
-                }
+                    return ApiBadRequest<object>("Không có file được chọn");
 
-                // Kiểm tra định dạng file
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                
-                if (!allowedExtensions.Contains(fileExtension))
-                {
-                    return ApiBadRequest("Chỉ cho phép tải lên các file ảnh: " + string.Join(", ", allowedExtensions));
-                }
+                if (!_imageService.IsValidImageFile(file))
+                    return ApiBadRequest<object>("Định dạng file không hợp lệ");
 
-                // Kiểm tra kích thước file (tối đa 5MB)
-                if (file.Length > 5 * 1024 * 1024)
-                {
-                    return ApiBadRequest("Kích thước file không được vượt quá 5MB");
-                }
-
-                // Tạo tên file duy nhất
-                var fileName = Guid.NewGuid().ToString() + fileExtension;
-                var uploadPath = Path.Combine("PL", "static", "image", "article");
-                var fullPath = Path.Combine(uploadPath, fileName);
-
-                // Tạo thư mục nếu chưa tồn tại
-                Directory.CreateDirectory(uploadPath);
-
-                // Lưu file
-                using (var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                // Trả về đường dẫn tương đối
-                var relativePath = $"/static/image/article/{fileName}";
-                
-                return ApiOk(new { imageUrl = relativePath }, "Tải ảnh lên thành công");
+                var imageUrl = await _imageService.UploadImageAsync(file, folder);
+                return ApiOk(new { imageUrl }, "Upload ảnh thành công");
             }
             catch (Exception ex)
             {
-                return ApiError($"Lỗi khi tải ảnh lên: {ex.Message}");
+                return ApiBadRequest<object>(ex.Message);
             }
         }
 

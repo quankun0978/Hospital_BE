@@ -55,8 +55,21 @@ namespace Hospital_BE.DAL.Repositories
         {
             var query = _context.Users
                 .Include(u => u.Role)
-                .OrderBy(u => u.Name)
                 .AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                var searchTerm = parameters.SearchTerm.ToLower();
+                query = query.Where(u => 
+                    (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
+                    (u.Email != null && u.Email.ToLower().Contains(searchTerm)) ||
+                    (u.Username != null && u.Username.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Default ordering
+            query = query.OrderBy(u => u.Name);
 
             var totalCount = await query.CountAsync();
             var items = await query

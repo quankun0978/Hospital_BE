@@ -34,11 +34,6 @@ namespace Hospital_BE.PL.DTOs
     {
         [StringLength(255, ErrorMessage = "Họ và tên tối đa 255 ký tự")]
         public string Name { get; set; }
-
-        [StringLength(15, ErrorMessage = "Số điện thoại tối đa 15 ký tự")]
-        [RegularExpression(@"^(0|\+84)(\d{9})$", ErrorMessage = "Số điện thoại không đúng định dạng")]
-        public string Phone { get; set; }
-
         [StringLength(255, ErrorMessage = "Email tối đa 255 ký tự")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; }
